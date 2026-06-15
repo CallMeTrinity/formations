@@ -15,7 +15,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | Algorithmes et structures de données | `algorithmes-et-structures-de-donnees` | idée | — |
 | TypeScript | `typescript` | idée | — |
 | Symfony | `symfony` | terminée | [symfony/](symfony/) |
-| Symfony avancé | `symfony-avance` | en cours | [symfony-avance/](symfony-avance/) |
+| Symfony avancé | `symfony-avance` | terminée | [symfony-avance/](symfony-avance/) |
 | JavaFX | `javafx` | idée | — |
 | Machine learning avec Python | `machine-learning-python` | idée | — |
 | IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | — |
