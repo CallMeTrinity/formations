@@ -14,7 +14,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | Linux & Bash | `linux-bash` | terminée | [linux-bash/](linux-bash/) |
 | Algorithmes et structures de données | `algorithmes-et-structures-de-donnees` | idée | — |
 | TypeScript | `typescript` | idée | — |
-| Symfony | `symfony` | idée | — |
+| Symfony | `symfony` | en cours | [symfony/](symfony/) |
 | JavaFX | `javafx` | idée | — |
 | Machine learning avec Python | `machine-learning-python` | idée | — |
 | IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | — |
