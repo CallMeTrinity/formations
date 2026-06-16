@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/*
+ * Les design tokens vivent dans tokens.css (placeholder remplacable par
+ * l'export Claude Design depuis /design). Voir ce fichier pour les details.
+ */
+@import "./tokens.css";
+
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Mise en forme du contenu pedagogique rendu depuis le markdown.
+     A affiner en M3 (lecteur de chapitre). */
+  .prose-chapter :where(h2) {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose-chapter :where(p, ul, ol) {
+    margin-bottom: 1rem;
+    line-height: 1.7;
+  }
+  .prose-chapter :where(code) {
+    font-family: var(--font-mono);
+  }
+}

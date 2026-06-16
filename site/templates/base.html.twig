@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Formations{% endblock %}</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>F</text></svg>">
+        {% block stylesheets %}{% endblock %}
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+
+        {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
+        {% if frankenphpHotReload %}
+        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
+        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
+        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+        {% endif %}
+    </head>
+    <body class="min-h-screen flex flex-col">
+        <header class="border-b border-line bg-surface">
+            <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+                <a href="{{ path('app_home') }}" class="text-lg font-bold text-brand-700">Formations</a>
+                <nav class="flex items-center gap-6 text-sm">
+                    {# Liens actives au fil des milestones (catalogue, dashboard, recos). #}
+                    <a href="#" class="text-muted hover:text-ink">Catalogue</a>
+                    <a href="#" class="text-muted hover:text-ink">Mes formations</a>
+                    <a href="#" class="text-muted hover:text-ink">Recommandations</a>
+                    <a href="#" class="rounded-md bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700">Connexion</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="flex-1">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="mx-auto max-w-6xl px-4 mt-4">
+                        <div class="rounded-md border border-line bg-surface px-4 py-3 text-sm">{{ message }}</div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="border-t border-line bg-surface">
+            <div class="mx-auto max-w-6xl px-4 py-6 text-sm text-muted">
+                Plateforme de formations — contenu synchronise depuis le depot markdown.
+            </div>
+        </footer>
+    </body>
+</html>

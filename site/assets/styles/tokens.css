@@ -1,0 +1,41 @@
+/*
+ * Design tokens — PLACEHOLDER NEUTRE
+ *
+ * Ce fichier est destine a etre REMPLACE par l'export Claude Design
+ * (dossier `/design` a la racine du depot). Il declare les design tokens via la
+ * directive `@theme` de Tailwind v4 : couleurs, typographie, rayons, ombres.
+ *
+ * Les templates Twig n'utilisent que des classes utilitaires derivees de ces
+ * tokens (ex: `bg-brand-600`, `text-ink`, `bg-canvas`). Remplacer ce fichier
+ * suffit donc a habiller entierement le site SANS toucher au HTML.
+ *
+ * Pour integrer l'export : copier les tokens depuis `/design` ici (ou importer
+ * le fichier exporte), en conservant les memes NOMS de tokens.
+ */
+@theme {
+  /* Couleur de marque (placeholder : indigo neutre) */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+
+  /* Encre et surfaces */
+  --color-ink: #111827;
+  --color-muted: #6b7280;
+  --color-surface: #ffffff;
+  --color-canvas: #f8fafc;
+  --color-line: #e5e7eb;
+
+  /* Typographie */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+
+  /* Rayons */
+  --radius-card: 0.75rem;
+}
