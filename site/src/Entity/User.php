@@ -133,12 +133,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPreferences(?UserPreferences $preferences): static
     {
         // unset the owning side of the relation if necessary
-        if ($preferences === null && $this->preferences !== null) {
+        if (null === $preferences && null !== $this->preferences) {
             $this->preferences->setUser(null);
         }
 
         // set the owning side of the relation if necessary
-        if ($preferences !== null && $preferences->getUser() !== $this) {
+        if (null !== $preferences && $preferences->getUser() !== $this) {
             $preferences->setUser($this);
         }
 
