@@ -27,9 +27,16 @@ class Tag
     #[ORM\ManyToMany(targetEntity: Formation::class, mappedBy: 'tags')]
     private Collection $formations;
 
+    /**
+     * @var Collection<int, UserPreferences>
+     */
+    #[ORM\ManyToMany(targetEntity: UserPreferences::class, mappedBy: 'preferredTags')]
+    private Collection $userPreferences;
+
     public function __construct()
     {
         $this->formations = new ArrayCollection();
+        $this->userPreferences = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -83,6 +90,33 @@ class Tag
     {
         if ($this->formations->removeElement($formation)) {
             $formation->removeTag($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, UserPreferences>
+     */
+    public function getUserPreferences(): Collection
+    {
+        return $this->userPreferences;
+    }
+
+    public function addUserPreference(UserPreferences $userPreference): static
+    {
+        if (!$this->userPreferences->contains($userPreference)) {
+            $this->userPreferences->add($userPreference);
+            $userPreference->addPreferredTag($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUserPreference(UserPreferences $userPreference): static
+    {
+        if ($this->userPreferences->removeElement($userPreference)) {
+            $userPreference->removePreferredTag($this);
         }
 
         return $this;
