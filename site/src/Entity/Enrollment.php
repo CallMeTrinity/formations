@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: EnrollmentRepository::class)]
-#[ORM\UniqueConstraint(name: 'UNIQ_ENROLLMENT_USER_FORMATION', fields: ['user_id', 'formation_id'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_ENROLLMENT_USER_FORMATION', fields: ['user', 'formation'])]
 class Enrollment
 {
     #[ORM\Id]

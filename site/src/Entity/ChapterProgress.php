@@ -6,6 +6,7 @@ use App\Repository\ChapterProgressRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ChapterProgressRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_CHAPTER_PROGRESS_ENROLLMENT_CHAPTER', fields: ['enrollment', 'chapter'])]
 class ChapterProgress
 {
     #[ORM\Id]

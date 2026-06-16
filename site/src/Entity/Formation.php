@@ -32,8 +32,8 @@ class Formation
     #[ORM\Column(enumType: Status::class, options: ['default' => Status::DRAFT])]
     private ?Status $status = Status::DRAFT;
 
-    #[ORM\Column(enumType: Visibility::class)]
-    private ?Visibility $visibility = null;
+    #[ORM\Column(enumType: Visibility::class, options: ['default' => Visibility::DRAFT])]
+    private ?Visibility $visibility = Visibility::DRAFT;
 
     /**
      * @var Collection<int, Chapter>
@@ -49,7 +49,7 @@ class Formation
      */
     #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'formations')]
     private Collection $tags;
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $estimatedMinutes = null;
 
     #[ORM\Column]
@@ -155,7 +155,7 @@ class Formation
         return $this->estimatedMinutes;
     }
 
-    public function setEstimatedMinutes(int $estimatedMinutes): static
+    public function setEstimatedMinutes(?int $estimatedMinutes): static
     {
         $this->estimatedMinutes = $estimatedMinutes;
 

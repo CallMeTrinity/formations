@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ChapterRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_CHAPTER_FORMATION_SLUG', fields: ['formation', 'slug'])]
 class Chapter
 {
     #[ORM\Id]
@@ -22,7 +23,7 @@ class Chapter
     #[ORM\Column]
     private ?int $position = null;
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     private ?string $slug = null;
 
     #[ORM\Column(length: 255)]
