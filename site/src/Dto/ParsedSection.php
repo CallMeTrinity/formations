@@ -11,8 +11,6 @@ final readonly class ParsedSection
         public string $title,
         public string $html,
         public int $position,
-    ){
-
+    ) {
     }
-
 }
