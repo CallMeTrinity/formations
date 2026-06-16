@@ -10,7 +10,6 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FormationRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -64,8 +63,6 @@ class Formation
      */
     #[ORM\OneToMany(targetEntity: Enrollment::class, mappedBy: 'formation')]
     private Collection $enrollments;
-
-
 
     public function __construct()
     {
