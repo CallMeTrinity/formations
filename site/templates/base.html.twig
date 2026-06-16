@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Formations{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>F</text></svg>">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><rect width=%22128%22 height=%22128%22 rx=%2212%22 fill=%22%23d9622b%22/></svg>">
+
+        {# Polices du design system : IBM Plex Sans + IBM Plex Mono #}
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
         {% block stylesheets %}{% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
@@ -19,23 +25,31 @@
     </head>
     <body class="min-h-screen flex flex-col">
         <header class="border-b border-line bg-surface">
-            <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-                <a href="{{ path('app_home') }}" class="text-lg font-bold text-brand-700">Formations</a>
-                <nav class="flex items-center gap-6 text-sm">
+            <div class="container-page h-16 flex items-center gap-6">
+                <a href="{{ path('app_home') }}" class="flex items-center gap-2 no-underline focus-ring">
+                    <span class="inline-block size-[18px] rounded-sm bg-accent"></span>
+                    <span class="font-mono text-md font-semibold text-fg tracking-tight">formations</span>
+                </a>
+                <nav class="ml-4 flex items-center gap-5 text-sm">
                     {# Liens actives au fil des milestones (catalogue, dashboard, recos). #}
-                    <a href="#" class="text-muted hover:text-ink">Catalogue</a>
-                    <a href="#" class="text-muted hover:text-ink">Mes formations</a>
-                    <a href="#" class="text-muted hover:text-ink">Recommandations</a>
-                    <a href="#" class="rounded-md bg-brand-600 px-3 py-1.5 text-white hover:bg-brand-700">Connexion</a>
+                    <a href="#" class="text-fg font-medium no-underline">Catalogue</a>
+                    <a href="#" class="text-fg-secondary no-underline hover:text-fg">Mes formations</a>
+                    <a href="#" class="text-fg-secondary no-underline hover:text-fg">Recommandations</a>
                 </nav>
+                <div class="ml-auto flex items-center gap-3">
+                    <a href="#" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg">Connexion</a>
+                    <a href="#" class="btn btn--primary focus-ring">Créer un compte</a>
+                </div>
             </div>
         </header>
 
         <main class="flex-1">
             {% for label, messages in app.flashes %}
                 {% for message in messages %}
-                    <div class="mx-auto max-w-6xl px-4 mt-4">
-                        <div class="rounded-md border border-line bg-surface px-4 py-3 text-sm">{{ message }}</div>
+                    <div class="container-page mt-4">
+                        <div class="callout {{ label == 'success' ? 'callout--success' : (label == 'error' ? 'callout--danger' : '') }}">
+                            <div class="text-sm text-fg-secondary">{{ message }}</div>
+                        </div>
                     </div>
                 {% endfor %}
             {% endfor %}
@@ -43,8 +57,9 @@
         </main>
 
         <footer class="border-t border-line bg-surface">
-            <div class="mx-auto max-w-6xl px-4 py-6 text-sm text-muted">
-                Plateforme de formations — contenu synchronise depuis le depot markdown.
+            <div class="container-page py-6 flex items-center justify-between gap-4 flex-wrap">
+                <span class="text-sm text-muted">Plateforme de formations — contenu synchronisé depuis le dépôt markdown.</span>
+                <span class="font-mono text-xs text-muted">Apprends · Suis · Progresse</span>
             </div>
         </footer>
     </body>

@@ -8,7 +8,7 @@ Roadmap et architecture : voir les **milestones** et **issues** GitHub (M0 → M
 
 ## Prérequis
 
-- PHP 8.3+ (testé avec 8.5)
+- PHP 8.4+ (testé avec 8.5)
 - Composer 2
 - Docker (pour MariaDB)
 - [Symfony CLI](https://symfony.com/download) (serveur de dev + détection auto du port Docker)
@@ -48,18 +48,41 @@ symfony open:local
 
 ## Design
 
-Le design provient de **Claude Design**. On ne code pas le CSS à la main : les **design tokens**
-(couleurs, typographie, rayons…) sont déclarés dans `assets/styles/tokens.css` via la directive
-`@theme` de Tailwind v4, et les templates n'utilisent que des classes utilitaires dérivées de ces
-tokens (`bg-brand-600`, `text-ink`, `bg-canvas`, `rounded-card`…).
+Le design provient de **Claude Design** (système « Devcurriculum ») exporté dans le dossier
+`/design` à la racine du dépôt. On ne code pas le CSS à la main.
 
-`tokens.css` est aujourd'hui un **placeholder neutre**. Pour appliquer un thème :
+- **`assets/styles/tokens.css`** est **synchronisé depuis `/design/tokens.css`** : variables CSS
+  brutes (`--bg`, `--text`, `--accent`, échelle typo/spacing/radius), en oklch, avec thèmes
+  **light/dark** via `[data-theme]`. Polices **IBM Plex Sans / Mono** (chargées dans `base.html.twig`).
+- **`assets/styles/app.css`** fait le pont vers Tailwind v4 via un bloc `@theme inline` : il expose
+  ces tokens comme tokens de thème, ce qui génère les utilitaires correspondants (`bg-accent`,
+  `text-fg`, `text-muted`, `border-line`, `rounded-md`, `text-md`, `font-mono`…). Le mot-clé
+  `inline` préserve le basculement light/dark.
+- Une **librairie de composants préchargés** (`@layer components`) reproduit le design system :
+  `.btn`/`.btn--primary|secondary|ghost|danger`, `.card`, `.badge`, `.tag`, `.input`, `.callout`,
+  `.progress`, `.eyebrow`, `.container-page`, `.prose-chapter`…
 
-1. Exporter les tokens depuis Claude Design dans le dossier `/design` à la racine du dépôt.
-2. Reporter/importer ces tokens dans `assets/styles/tokens.css` en **conservant les mêmes noms**.
-3. `php bin/console tailwind:build`.
+Pour ré-appliquer un nouvel export Claude Design : recopier `/design/tokens.css` dans
+`assets/styles/tokens.css` (mêmes noms de tokens) puis `php bin/console tailwind:build`. Aucun
+template n'a besoin d'être modifié.
 
-Aucun template HTML n'a besoin d'être modifié pour changer l'habillage.
+## Qualité & déploiement (CI/CD)
+
+- **CI** (`.github/workflows/ci.yml`) — sur push/PR touchant `site/` : PHP-CS-Fixer (dry-run),
+  PHPStan (niveau 6), PHPUnit, avec un service MariaDB.
+- **Déploiement** (`.github/workflows/deploy.yml`) — sur tag `vX.Y.Z` (ou lancement manuel) : SSH vers
+  Infomaniak et exécution de `deploy.sh` (à la racine du dépôt), qui checkout le dernier tag puis,
+  dans `site/`, fait composer install --no-dev, migrations, build des assets et cache:clear.
+  Cible : `formations.antoninpamart.fr`. Variables GitHub : `SSH_HOST`, `SSH_PORT`, `SSH_USER`,
+  `APP_DIR` ; secret : `SSH_PRIVATE_KEY`. Le document root du domaine doit pointer vers `site/public`.
+
+Outils en local :
+
+```bash
+PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix    # corriger le style
+vendor/bin/phpstan analyse                               # analyse statique
+php bin/phpunit                                          # tests
+```
 
 ## Structure (en construction)
 

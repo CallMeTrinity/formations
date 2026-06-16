@@ -1,0 +1,77 @@
+name: CI
+
+# Qualite de l'application Symfony (dossier site/) : PHP-CS-Fixer, PHPStan, PHPUnit.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'site/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/ci.yml'
+
+defaults:
+  run:
+    working-directory: site
+
+jobs:
+  qa:
+    name: Lint, analyse, tests
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: app
+          MARIADB_USER: app
+          MARIADB_PASSWORD: app
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+
+    env:
+      DATABASE_URL: "mysql://app:app@127.0.0.1:3306/app?serverVersion=11.4.2-MariaDB&charset=utf8mb4"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache dir
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('site/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Warm cache (PHPStan Symfony container)
+        run: php bin/console cache:warmup --env=dev
+
+      - name: PHP-CS-Fixer (dry-run)
+        env:
+          PHP_CS_FIXER_IGNORE_ENV: 1
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse --no-progress
+
+      - name: PHPUnit
+        run: php bin/phpunit
