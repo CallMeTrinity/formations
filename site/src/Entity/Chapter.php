@@ -35,9 +35,16 @@ class Chapter
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $sections;
 
+    /**
+     * @var Collection<int, ChapterProgress>
+     */
+    #[ORM\OneToMany(targetEntity: ChapterProgress::class, mappedBy: 'chapter')]
+    private Collection $chapterProgress;
+
     public function __construct()
     {
         $this->sections = new ArrayCollection();
+        $this->chapterProgress = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -117,6 +124,36 @@ class Chapter
             // set the owning side to null (unless already changed)
             if ($section->getChapter() === $this) {
                 $section->setChapter(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ChapterProgress>
+     */
+    public function getChapterProgress(): Collection
+    {
+        return $this->chapterProgress;
+    }
+
+    public function addChapterProgress(ChapterProgress $chapterProgress): static
+    {
+        if (!$this->chapterProgress->contains($chapterProgress)) {
+            $this->chapterProgress->add($chapterProgress);
+            $chapterProgress->setChapter($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChapterProgress(ChapterProgress $chapterProgress): static
+    {
+        if ($this->chapterProgress->removeElement($chapterProgress)) {
+            // set the owning side to null (unless already changed)
+            if ($chapterProgress->getChapter() === $this) {
+                $chapterProgress->setChapter(null);
             }
         }
 
