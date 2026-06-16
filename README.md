@@ -19,6 +19,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | JavaFX | `javafx` | idée | — |
 | Machine learning avec Python | `machine-learning-python` | idée | — |
 | IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | — |
+| Vim : coder sans souris | `vim` | terminée | [vim/](vim/) |
 
 Statuts possibles : `idée` · `en cours` · `terminée`.
 
