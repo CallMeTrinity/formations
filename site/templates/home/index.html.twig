@@ -3,29 +3,64 @@
 {% block title %}Formations — accueil{% endblock %}
 
 {% block body %}
-<section class="mx-auto max-w-6xl px-4 py-16">
-    <h1 class="text-4xl font-bold text-ink">Apprends, suis ta progression, progresse.</h1>
-    <p class="mt-4 max-w-2xl text-lg text-muted">
-        Une plateforme pour consulter les formations, suivre ton avancement chapitre par chapitre
-        et recevoir des recommandations adaptees a tes preferences.
-    </p>
-    <div class="mt-8 flex gap-4">
-        <a href="#" class="rounded-md bg-brand-600 px-5 py-2.5 text-white font-medium hover:bg-brand-700">Explorer le catalogue</a>
-        <a href="#" class="rounded-md border border-line bg-surface px-5 py-2.5 font-medium hover:bg-canvas">Creer un compte</a>
-    </div>
+<section class="border-b border-line">
+    <div class="container-page py-20 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <div>
+            <p class="eyebrow mb-4">Formations pour développeurs · pratique d'abord</p>
+            <h1 class="text-4xl font-bold tracking-tight leading-tight text-fg mb-5 max-w-[16ch]">
+                Apprends, suis ta progression, progresse.
+            </h1>
+            <p class="text-md text-fg-secondary max-w-[52ch] mb-6">
+                Une plateforme pour consulter les formations du dépôt, suivre ton avancement chapitre
+                par chapitre et recevoir des recommandations adaptées à tes préférences et à ton niveau.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="#" class="btn btn--primary btn--lg focus-ring">Explorer le catalogue</a>
+                <a href="#" class="btn btn--secondary btn--lg focus-ring">Créer un compte</a>
+            </div>
+            <p class="text-sm text-muted mt-5">Gratuit · 4 formations · suivi de progression</p>
+        </div>
 
-    <div class="mt-16 grid gap-6 sm:grid-cols-3">
-        <div class="rounded-card border border-line bg-surface p-6">
-            <h2 class="font-semibold text-ink">Consulter</h2>
-            <p class="mt-2 text-sm text-muted">Des formations structurees en chapitres, lisibles directement dans le navigateur.</p>
+        <div class="bg-surface-inset border border-line rounded-md overflow-hidden shadow-[var(--shadow-md)]">
+            <div class="flex items-center gap-2 p-3 border-b border-line">
+                <span class="size-[9px] rounded-full bg-danger"></span>
+                <span class="size-[9px] rounded-full bg-warning"></span>
+                <span class="size-[9px] rounded-full bg-success"></span>
+                <span class="font-mono text-xs text-muted ml-2">~/formations</span>
+            </div>
+            <pre class="m-0 p-6 font-mono text-sm leading-relaxed text-fg-secondary overflow-x-auto"><span class="text-accent">$</span> formations suivre symfony
+<span class="text-muted">→ chapitre 03 — le routing</span>
+
+  <span class="text-fg">routes</span>     définir une route
+  <span class="text-fg">controller</span> renvoyer une réponse
+  <span class="text-fg">.</span>          marquer le chapitre terminé
+
+<span class="text-success">✓ progression 7/12 chapitres</span></pre>
         </div>
-        <div class="rounded-card border border-line bg-surface p-6">
-            <h2 class="font-semibold text-ink">Suivre</h2>
-            <p class="mt-2 text-sm text-muted">Marque les chapitres termines et visualise ta progression.</p>
-        </div>
-        <div class="rounded-card border border-line bg-surface p-6">
-            <h2 class="font-semibold text-ink">Recommander</h2>
-            <p class="mt-2 text-sm text-muted">Des suggestions basees sur tes preferences et ton niveau.</p>
+    </div>
+</section>
+
+<section>
+    <div class="container-page py-16">
+        <p class="eyebrow mb-3">Comment ça marche</p>
+        <h2 class="text-2xl font-bold tracking-tight text-fg mb-6">Trois usages, un seul endroit</h2>
+        <div class="grid gap-5 sm:grid-cols-3">
+            <div class="card card--interactive">
+                <span class="badge badge--accent mb-4">CONSULTER</span>
+                <h3 class="text-lg font-semibold tracking-tight text-fg mb-2">Lire les formations</h3>
+                <p class="text-sm text-fg-secondary">Des formations structurées en chapitres, lisibles directement dans le navigateur.</p>
+            </div>
+            <div class="card card--interactive">
+                <span class="badge badge--accent mb-4">SUIVRE</span>
+                <h3 class="text-lg font-semibold tracking-tight text-fg mb-2">Mesurer ta progression</h3>
+                <p class="text-sm text-fg-secondary mb-4">Marque les chapitres terminés et visualise ton avancement.</p>
+                <div class="progress"><div class="progress__bar" style="width:58%"></div></div>
+            </div>
+            <div class="card card--interactive">
+                <span class="badge badge--accent mb-4">RECOMMANDER</span>
+                <h3 class="text-lg font-semibold tracking-tight text-fg mb-2">Trouver la suite</h3>
+                <p class="text-sm text-fg-secondary">Des suggestions basées sur tes préférences, tes tags favoris et ton niveau.</p>
+            </div>
         </div>
     </div>
 </section>

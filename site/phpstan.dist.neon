@@ -1,0 +1,8 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    # L'extension phpstan-symfony est chargee automatiquement (extension-installer).
+    # Le container XML aide PHPStan a comprendre les services Symfony.
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
