@@ -36,6 +36,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $displayName = null;
 
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?UserPreferences $preferences = null;
+
     /**
      * @var Collection<int, Enrollment>
      */
@@ -120,6 +123,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
 
         return $data;
+    }
+
+    public function getPreferences(): ?UserPreferences
+    {
+        return $this->preferences;
+    }
+
+    public function setPreferences(?UserPreferences $preferences): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($preferences === null && $this->preferences !== null) {
+            $this->preferences->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($preferences !== null && $preferences->getUser() !== $this) {
+            $preferences->setUser($this);
+        }
+
+        $this->preferences = $preferences;
+
+        return $this;
     }
 
     public function getDisplayName(): ?string
