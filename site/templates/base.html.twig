@@ -37,8 +37,13 @@
                     <a href="#" class="text-fg-secondary no-underline hover:text-fg">Recommandations</a>
                 </nav>
                 <div class="ml-auto flex items-center gap-3">
-                    <a href="#" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg">Connexion</a>
-                    <a href="#" class="btn btn--primary focus-ring">Créer un compte</a>
+                    {% if app.user %}
+                        <span class="text-sm text-fg-secondary font-medium">{{ app.user.displayName ?? app.user.userIdentifier }}</span>
+                        <a href="{{ path('app_logout') }}" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg">Déconnexion</a>
+                    {% else %}
+                        <a href="{{ path('app_login') }}" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg">Connexion</a>
+                        <a href="{{ path('app_register') }}" class="btn btn--primary focus-ring">Créer un compte</a>
+                    {% endif %}
                 </div>
             </div>
         </header>
