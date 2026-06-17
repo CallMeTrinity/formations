@@ -5,6 +5,7 @@ namespace App\Tests\Controller;
 use App\Entity\Chapter;
 use App\Entity\Formation;
 use App\Entity\Section;
+use App\Entity\User;
 use App\Enum\SectionType;
 use App\Enum\Visibility;
 use Doctrine\ORM\EntityManagerInterface;
@@ -51,6 +52,27 @@ class FormationControllerTest extends WebTestCase
         return $formation;
     }
 
+    /**
+     * Crée et connecte un utilisateur avec les rôles fournis.
+     *
+     * @param list<string> $roles
+     */
+    private function loginUser(array $roles = []): User
+    {
+        $user = (new User())
+            ->setEmail('u'.uniqid().'@test.dev')
+            ->setRoles($roles);
+        // Mot de passe non nullable ; loginUser() n'en vérifie pas la valeur.
+        $user->setPassword('x');
+
+        $this->em->persist($user);
+        $this->em->flush();
+
+        $this->client->loginUser($user);
+
+        return $user;
+    }
+
     public function testShowDisplaysPresentationAndChapterPlan(): void
     {
         $this->createFormation('symfony', Visibility::PUBLIC);
@@ -63,8 +85,9 @@ class FormationControllerTest extends WebTestCase
         self::assertSelectorTextContains('ol', 'Introduction');
     }
 
-    public function testBetaFormationIsAccessible(): void
+    public function testBetaFormationIsAccessibleWhenLoggedIn(): void
     {
+        $this->loginUser();
         $this->createFormation('vim', Visibility::BETA);
 
         $this->client->request('GET', '/formations/vim');
@@ -72,13 +95,43 @@ class FormationControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
-    public function testDraftFormationReturns404(): void
+    public function testBetaFormationIsDeniedForAnonymous(): void
+    {
+        $this->createFormation('vim', Visibility::BETA);
+
+        $this->client->request('GET', '/formations/vim');
+
+        // 403 transformé en redirection vers le login par l'entry point form_login.
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testDraftFormationReturns404ForAnonymous(): void
     {
         $this->createFormation('cachee', Visibility::DRAFT);
 
         $this->client->request('GET', '/formations/cachee');
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testDraftFormationReturns404ForLoggedUser(): void
+    {
+        $this->loginUser();
+        $this->createFormation('cachee', Visibility::DRAFT);
+
+        $this->client->request('GET', '/formations/cachee');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testDraftFormationIsAccessibleForAdmin(): void
+    {
+        $this->loginUser(['ROLE_ADMIN']);
+        $this->createFormation('cachee', Visibility::DRAFT);
+
+        $this->client->request('GET', '/formations/cachee');
+
+        self::assertResponseIsSuccessful();
     }
 
     public function testUnknownSlugReturns404(): void
@@ -183,5 +236,14 @@ class FormationControllerTest extends WebTestCase
         $this->client->request('GET', '/formations/cachee/introduction');
 
         self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testChapterOfBetaFormationIsDeniedForAnonymous(): void
+    {
+        $this->createFormationWithChapters('vim', Visibility::BETA);
+
+        $this->client->request('GET', '/formations/vim/introduction');
+
+        self::assertResponseRedirects('/login');
     }
 }
