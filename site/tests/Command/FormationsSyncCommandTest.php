@@ -10,9 +10,9 @@ use App\Enum\Difficulty;
 use App\Enum\Visibility;
 use App\Repository\FormationRepository;
 use App\Service\ChapterParser;
+use App\Service\ReadmeParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
-use League\CommonMark\CommonMarkConverter;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -48,10 +48,41 @@ final class FormationsSyncCommandTest extends KernelTestCase
         self::assertSame('Formation Alpha', $alpha->getTitle());
         // La description est convertie en HTML à la sync (markdown inline), comme les sections.
         self::assertSame(
-            "<p>Une formation de test pour vérifier la synchronisation. Sa description tient sur deux lignes.</p>\n",
+            "<p>Une formation de test pour vérifier la synchronisation.\nSa description tient sur deux lignes.</p>\n",
             $alpha->getDescription(),
         );
         self::assertCount(2, $alpha->getChapters());
+    }
+
+    public function testImportsReadmeContentBlocks(): void
+    {
+        $this->runSync();
+
+        $alpha = $this->formationRepository()->findOneBy(['slug' => 'alpha']);
+        self::assertNotNull($alpha);
+
+        // Les blocs canoniques du README sont importés en HTML.
+        self::assertSame("<p>Aucun.</p>\n", $alpha->getPrerequisites());
+        self::assertSame(
+            "<ul>\n<li>Compétence un.</li>\n<li>Compétence deux.</li>\n</ul>\n",
+            $alpha->getObjectives(),
+        );
+        self::assertSame(
+            "<p>Construire un petit projet de test au fil des chapitres.</p>\n",
+            $alpha->getProject(),
+        );
+
+        // Le « Plan de la formation » n'est jamais persisté (doublon des chapitres),
+        // et la navigation de pied (« Commencer par… ») est retirée.
+        self::assertStringNotContainsString('Plan de la formation', (string) $alpha->getProject());
+        self::assertStringNotContainsString('Commencer par', (string) $alpha->getProject());
+
+        // beta n'a qu'un bloc Prérequis : objectifs et projet restent nuls.
+        $beta = $this->formationRepository()->findOneBy(['slug' => 'beta']);
+        self::assertNotNull($beta);
+        self::assertSame("<p>Aucun.</p>\n", $beta->getPrerequisites());
+        self::assertNull($beta->getObjectives());
+        self::assertNull($beta->getProject());
     }
 
     public function testSecondRunIsIdempotent(): void
@@ -100,7 +131,7 @@ final class FormationsSyncCommandTest extends KernelTestCase
             self::FIXTURES_DIR,
             $this->formationRepository(),
             self::getContainer()->get(ChapterParser::class),
-            new CommonMarkConverter(),
+            self::getContainer()->get(ReadmeParser::class),
         );
 
         $tester = new CommandTester($command);

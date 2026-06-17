@@ -29,6 +29,15 @@ class Formation
     #[ORM\Column(type: Types::TEXT)]
     private ?string $description = null;
 
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $prerequisites = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $objectives = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $project = null;
+
     #[ORM\Column(enumType: Status::class, options: ['default' => Status::DRAFT])]
     private ?Status $status = Status::DRAFT;
 
@@ -120,6 +129,42 @@ class Formation
     public function setDescription(string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getPrerequisites(): ?string
+    {
+        return $this->prerequisites;
+    }
+
+    public function setPrerequisites(?string $prerequisites): static
+    {
+        $this->prerequisites = $prerequisites;
+
+        return $this;
+    }
+
+    public function getObjectives(): ?string
+    {
+        return $this->objectives;
+    }
+
+    public function setObjectives(?string $objectives): static
+    {
+        $this->objectives = $objectives;
+
+        return $this;
+    }
+
+    public function getProject(): ?string
+    {
+        return $this->project;
+    }
+
+    public function setProject(?string $project): static
+    {
+        $this->project = $project;
 
         return $this;
     }

@@ -5,14 +5,13 @@ namespace App\Service;
 use App\Dto\ParsedChapter;
 use App\Dto\ParsedSection;
 use App\Enum\SectionType;
-use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Exception\CommonMarkException;
 
 use function Symfony\Component\String\u;
 
 final class ChapterParser
 {
-    public function __construct(private CommonMarkConverter $converter)
+    public function __construct(private MarkdownRenderer $renderer)
     {
     }
 
@@ -28,8 +27,7 @@ final class ChapterParser
         $sections = [];
         foreach ($rawSections as $index => $section) {
             $bodyMarkdown = trim(implode("\n", $section['body']));
-            $html = $this->converter->convert($bodyMarkdown)->getContent();
-            $html = $this->rewriteInterChapterLinks($html, $formationSlug);
+            $html = $this->renderer->render($bodyMarkdown, $formationSlug);
 
             $sections[] = new ParsedSection(
                 type: $this->mapType($section['title']),
@@ -116,33 +114,5 @@ final class ChapterParser
             str_contains($n, 'projet') => SectionType::PROJECT,
             default => SectionType::CONTENT,
         };
-    }
-
-    /**
-     * Réécrit les liens relatifs inter-chapitres (NN-slug.md, README.md) vers
-     * les chemins du lecteur. Laisse intacts les liens externes, absolus et les ancres.
-     *
-     * TODO #1 : passer par UrlGeneratorInterface quand la route du lecteur existera.
-     */
-    private function rewriteInterChapterLinks(string $html, string $formationSlug): string
-    {
-        return preg_replace_callback('/href="([^"]+)"/', function (array $m) use ($formationSlug): string {
-            $url = $m[1];
-            if (str_starts_with($url, 'http') || str_starts_with($url, 'mailto:')
-                || str_starts_with($url, '/') || str_starts_with($url, '#')) {
-                return $m[0]; // externe | absolu | ancre : inchangé
-            }
-
-            [$path, $anchor] = array_pad(explode('#', $url, 2), 2, null);
-            if (!preg_match('/^(\d{2}-[a-z0-9-]+|README)\.md$/', (string) $path, $mm)) {
-                return $m[0]; // pas un lien inter-chapitre reconnu
-            }
-
-            $target = 'README' === $mm[1]
-                ? '/formations/'.$formationSlug
-                : '/formations/'.$formationSlug.'/'.preg_replace('/^\d{2}-/', '', $mm[1]);
-
-            return 'href="'.$target.(null !== $anchor ? '#'.$anchor : '').'"';
-        }, $html) ?? $html;
     }
 }

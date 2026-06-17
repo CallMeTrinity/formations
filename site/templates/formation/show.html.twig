@@ -22,7 +22,22 @@
             </div>
 
             {# Description : HTML déjà rendu par la sync (CommonMark emballe dans <p>), d'où le <div> + raw. #}
-            <div class="text-md text-fg-secondary max-w-[60ch] mb-8">{{ formation.description|raw }}</div>
+            <div class="prose-chapter text-md text-fg-secondary max-w-[60ch] mb-8">{{ formation.description|raw }}</div>
+
+            {# Prérequis et objectifs : blocs HTML déjà rendus par la sync (cf. ReadmeParser). #}
+            {% if formation.prerequisites %}
+                <div class="callout max-w-[60ch] mb-6">
+                    <p class="font-semibold text-fg mb-1">Prérequis</p>
+                    <div class="prose-chapter text-sm text-fg-secondary">{{ formation.prerequisites|raw }}</div>
+                </div>
+            {% endif %}
+
+            {% if formation.objectives %}
+                <div class="max-w-[60ch] mb-8">
+                    <h2 class="text-lg font-bold tracking-tight text-fg mb-2">Ce que tu sauras faire à la fin</h2>
+                    <div class="prose-chapter text-md text-fg-secondary">{{ formation.objectives|raw }}</div>
+                </div>
+            {% endif %}
 
             {# Bouton Suivre : câblage réel en M4 (#20). Placeholder pour l'instant. #}
             <div class="flex flex-wrap items-center gap-3">
@@ -54,6 +69,14 @@
                         </li>
                     {% endfor %}
                 </ol>
+            {% endif %}
+
+            {# Projet fil rouge : bloc HTML déjà rendu par la sync (cf. ReadmeParser). #}
+            {% if formation.project %}
+                <div class="mt-10">
+                    <h2 class="text-xl font-bold tracking-tight text-fg mb-3">Projet fil rouge</h2>
+                    <div class="prose-chapter text-md text-fg-secondary max-w-[60ch]">{{ formation.project|raw }}</div>
+                </div>
             {% endif %}
         </div>
     </section>

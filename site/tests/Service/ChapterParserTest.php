@@ -5,6 +5,7 @@ namespace App\Tests\Service;
 use App\Dto\ParsedSection;
 use App\Enum\SectionType;
 use App\Service\ChapterParser;
+use App\Service\MarkdownRenderer;
 use League\CommonMark\CommonMarkConverter;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +15,8 @@ final class ChapterParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->parser = new ChapterParser(new CommonMarkConverter(['html_input' => 'allow']));
+        $renderer = new MarkdownRenderer(new CommonMarkConverter(['html_input' => 'allow']));
+        $this->parser = new ChapterParser($renderer);
     }
 
     public function testExtractsTheH1Title(): void
