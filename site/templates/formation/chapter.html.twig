@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ chapter.title }} — {{ formation.title }}{% endblock %}
+
+{% block body %}
+    <article class="container-page container-narrow py-10">
+        {# Fil d'ariane : retour à la présentation de la formation (le sommaire). #}
+        <nav class="mb-6 text-sm" aria-label="Fil d'ariane">
+            <a href="{{ path('app_formation_show', { slug: formation.slug }) }}" class="text-fg-secondary no-underline hover:text-fg">{{ formation.title }}</a>
+            <span class="text-muted mx-2" aria-hidden="true">/</span>
+            <span class="text-muted">Chapitre {{ '%02d'|format(chapter.position) }}</span>
+        </nav>
+
+        <header class="mb-8 pb-6 border-b border-line">
+            <p class="eyebrow mb-2">Chapitre {{ '%02d'|format(chapter.position) }}</p>
+            <h1 class="text-3xl font-bold tracking-tight text-fg max-w-[28ch]">{{ chapter.title }}</h1>
+        </header>
+
+        {# Contenu pédagogique : HTML déjà rendu par la sync (CommonMark, html_input: allow),
+           d'où le |raw. Les blocs <details> des corrigés et quiz sont conservés tels quels. #}
+        <div class="prose-chapter">
+            {% for section in chapter.sections %}
+                <section>
+                    <h2>{{ section.title }}</h2>
+                    {{ section.content|raw }}
+                </section>
+            {% else %}
+                <div class="callout">Ce chapitre n'a pas encore de contenu.</div>
+            {% endfor %}
+        </div>
+
+        {# Navigation précédent / sommaire / suivant. #}
+        <nav class="mt-12 pt-6 border-t border-line flex items-center justify-between gap-4" aria-label="Navigation entre chapitres">
+            {% if previous %}
+                <a rel="prev" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: previous.slug }) }}" class="btn btn--secondary focus-ring">
+                    <span aria-hidden="true">&larr;</span>
+                    <span class="truncate max-w-[18ch]">{{ previous.title }}</span>
+                </a>
+            {% else %}
+                <span></span>
+            {% endif %}
+
+            <a href="{{ path('app_formation_show', { slug: formation.slug }) }}" class="btn btn--ghost focus-ring">Sommaire</a>
+
+            {% if next %}
+                <a rel="next" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: next.slug }) }}" class="btn btn--secondary focus-ring">
+                    <span class="truncate max-w-[18ch]">{{ next.title }}</span>
+                    <span aria-hidden="true">&rarr;</span>
+                </a>
+            {% else %}
+                <span></span>
+            {% endif %}
+        </nav>
+    </article>
+{% endblock %}

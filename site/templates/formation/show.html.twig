@@ -45,10 +45,12 @@
             {% else %}
                 <ol class="grid gap-3">
                     {% for chapter in formation.chapters %}
-                        {# Liens vers le lecteur ajoutés en #17. #}
-                        <li class="card flex items-center gap-4">
-                            <span class="font-mono text-sm text-muted">{{ '%02d'|format(chapter.position) }}</span>
-                            <span class="text-md font-medium text-fg">{{ chapter.title }}</span>
+                        <li>
+                            <a href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: chapter.slug }) }}" class="card card--interactive flex items-center gap-4 no-underline">
+                                <span class="font-mono text-sm text-muted">{{ '%02d'|format(chapter.position) }}</span>
+                                <span class="text-md font-medium text-fg">{{ chapter.title }}</span>
+                                <span class="ml-auto text-muted" aria-hidden="true">&rarr;</span>
+                            </a>
                         </li>
                     {% endfor %}
                 </ol>
