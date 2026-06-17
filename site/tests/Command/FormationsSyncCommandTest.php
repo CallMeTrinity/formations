@@ -12,6 +12,7 @@ use App\Repository\FormationRepository;
 use App\Service\ChapterParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
+use League\CommonMark\CommonMarkConverter;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
@@ -45,8 +46,9 @@ final class FormationsSyncCommandTest extends KernelTestCase
         $alpha = $this->formationRepository()->findOneBy(['slug' => 'alpha']);
         self::assertNotNull($alpha);
         self::assertSame('Formation Alpha', $alpha->getTitle());
+        // La description est convertie en HTML à la sync (markdown inline), comme les sections.
         self::assertSame(
-            'Une formation de test pour vérifier la synchronisation. Sa description tient sur deux lignes.',
+            "<p>Une formation de test pour vérifier la synchronisation. Sa description tient sur deux lignes.</p>\n",
             $alpha->getDescription(),
         );
         self::assertCount(2, $alpha->getChapters());
@@ -98,6 +100,7 @@ final class FormationsSyncCommandTest extends KernelTestCase
             self::FIXTURES_DIR,
             $this->formationRepository(),
             self::getContainer()->get(ChapterParser::class),
+            new CommonMarkConverter(),
         );
 
         $tester = new CommandTester($command);

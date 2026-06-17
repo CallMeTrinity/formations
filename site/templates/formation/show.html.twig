@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ formation.title }} — Formations{% endblock %}
+
+{% block body %}
+    <section class="border-b border-line">
+        <div class="container-page py-12">
+            <p class="eyebrow mb-3">Formation</p>
+            <h1 class="text-3xl font-bold tracking-tight text-fg mb-4 max-w-[24ch]">{{ formation.title }}</h1>
+
+            {# Métadonnées : difficulté, durée, tags #}
+            <div class="flex flex-wrap items-center gap-2 mb-6">
+                {% if formation.difficulty %}
+                    <span class="badge badge--accent">{{ formation.difficulty.label }}</span>
+                {% endif %}
+                {% if formation.estimatedMinutes %}
+                    <span class="badge">~{{ formation.estimatedMinutes }} min</span>
+                {% endif %}
+                {% for tag in formation.tags %}
+                    <span class="tag">{{ tag.label }}</span>
+                {% endfor %}
+            </div>
+
+            {# Description : HTML déjà rendu par la sync (CommonMark emballe dans <p>), d'où le <div> + raw. #}
+            <div class="text-md text-fg-secondary max-w-[60ch] mb-8">{{ formation.description|raw }}</div>
+
+            {# Bouton Suivre : câblage réel en M4 (#20). Placeholder pour l'instant. #}
+            <div class="flex flex-wrap items-center gap-3">
+                {% if app.user %}
+                    <button type="button" class="btn btn--primary btn--lg focus-ring" disabled>Suivre cette formation</button>
+                    <span class="text-sm text-muted">Le suivi arrive bientôt.</span>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="btn btn--primary btn--lg focus-ring">Se connecter pour suivre</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="container-page py-10">
+            <h2 class="text-xl font-bold tracking-tight text-fg mb-5">Plan des chapitres</h2>
+
+            {% if formation.chapters is empty %}
+                <div class="callout">Aucun chapitre pour le moment.</div>
+            {% else %}
+                <ol class="grid gap-3">
+                    {% for chapter in formation.chapters %}
+                        {# Liens vers le lecteur ajoutés en #17. #}
+                        <li class="card flex items-center gap-4">
+                            <span class="font-mono text-sm text-muted">{{ '%02d'|format(chapter.position) }}</span>
+                            <span class="text-md font-medium text-fg">{{ chapter.title }}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
