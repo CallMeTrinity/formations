@@ -1,0 +1,93 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon profil — Formations{% endblock %}
+
+{% block body %}
+    <div class="container-page container-narrow py-12 space-y-8">
+        <div>
+            <p class="eyebrow mb-2">Mon compte</p>
+            <h1 class="text-2xl font-semibold tracking-tight">Profil</h1>
+            <p class="text-sm text-fg-secondary mt-1">Gère les informations de ton compte.</p>
+        </div>
+
+        {# ── Informations du compte ─────────────────────────────────── #}
+        <div class="card max-w-md">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold tracking-tight">Informations</h2>
+                <p class="text-sm text-fg-secondary mt-1">Ton nom affiché apparaît dans l'en-tête et sur tes formations.</p>
+            </div>
+
+            {# Email : affiché en lecture seule, non modifiable depuis cette page. #}
+            <div class="space-y-1.5 mb-4">
+                <span class="field-label block">Adresse email</span>
+                <p class="text-sm text-fg font-medium">{{ app.user.email }}</p>
+            </div>
+
+            {{ form_start(profileForm, {attr: {class: 'space-y-4', novalidate: 'novalidate'}}) }}
+                {% if not profileForm.vars.valid %}
+                    <div class="callout callout--danger" role="alert">
+                        <div class="callout__title">Vérifie le formulaire</div>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-1.5">
+                    {{ form_label(profileForm.displayName) }}
+                    {{ form_widget(profileForm.displayName, {attr: {class: 'input focus-ring'}}) }}
+                    <p class="field-help">Laisse vide pour afficher ton email à la place.</p>
+                    {% for error in profileForm.displayName.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn--primary focus-ring" type="submit">
+                    Enregistrer
+                </button>
+            {{ form_end(profileForm) }}
+        </div>
+
+        {# ── Changement de mot de passe (option) ────────────────────── #}
+        <div class="card max-w-md">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold tracking-tight">Mot de passe</h2>
+                <p class="text-sm text-fg-secondary mt-1">Choisis un nouveau mot de passe pour ton compte.</p>
+            </div>
+
+            {{ form_start(passwordForm, {attr: {class: 'space-y-4', novalidate: 'novalidate'}}) }}
+                {% if not passwordForm.vars.valid %}
+                    <div class="callout callout--danger" role="alert">
+                        <div class="callout__title">Vérifie le formulaire</div>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-1.5">
+                    {{ form_label(passwordForm.currentPassword) }}
+                    {{ form_widget(passwordForm.currentPassword, {attr: {class: 'input focus-ring'}}) }}
+                    {% for error in passwordForm.currentPassword.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(passwordForm.newPassword.first) }}
+                    {{ form_widget(passwordForm.newPassword.first, {attr: {class: 'input focus-ring'}}) }}
+                    <p class="field-help">Au moins 8 caractères.</p>
+                    {% for error in passwordForm.newPassword.first.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(passwordForm.newPassword.second) }}
+                    {{ form_widget(passwordForm.newPassword.second, {attr: {class: 'input focus-ring'}}) }}
+                    {% for error in passwordForm.newPassword.second.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn--primary focus-ring" type="submit">
+                    Changer le mot de passe
+                </button>
+            {{ form_end(passwordForm) }}
+        </div>
+    </div>
+{% endblock %}
