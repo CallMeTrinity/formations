@@ -38,7 +38,7 @@ class Formation
     /**
      * @var Collection<int, Chapter>
      */
-    #[ORM\OneToMany(targetEntity: Chapter::class, mappedBy: 'formation')]
+    #[ORM\OneToMany(targetEntity: Chapter::class, mappedBy: 'formation', cascade: ['persist'])]
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $chapters;
     #[ORM\Column(nullable: true, enumType: Difficulty::class)]
