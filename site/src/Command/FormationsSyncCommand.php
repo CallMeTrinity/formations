@@ -9,6 +9,8 @@ use App\Entity\Section;
 use App\Repository\FormationRepository;
 use App\Service\ChapterParser;
 use Doctrine\ORM\EntityManagerInterface;
+use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\Exception\CommonMarkException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,10 +36,14 @@ final class FormationsSyncCommand extends Command
         private readonly string $formationsContentDir,
         private readonly FormationRepository $formationRepository,
         private readonly ChapterParser $chapterParser,
+        private readonly CommonMarkConverter $converter,
     ) {
         parent::__construct();
     }
 
+    /**
+     * @throws CommonMarkException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -76,9 +82,11 @@ final class FormationsSyncCommand extends Command
 
             // Champs CONTENU uniquement. On ne touche jamais aux champs admin
             // (visibility, difficulty, tags, estimatedMinutes) ni au statut éditorial.
+            // La description (markdown inline) est convertie en HTML, comme les
+            // sections de chapitre (cf. ChapterParser).
             $formation
                 ->setTitle($readme['title'])
-                ->setDescription($readme['description']);
+                ->setDescription($this->converter->convert($readme['description'])->getContent());
 
             $chaptersCount += $this->syncChapters($formation, $dir->getPathname(), $slug);
         }
