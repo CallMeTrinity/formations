@@ -13,7 +13,7 @@ habitudes.
 
 Avec l'utilisateur, fixer :
 
-- le **slug** (kebab-case, sans accents) ;
+- le **slug** (kebab-case, sans accents, précédé de f- pour "formation") ;
 - le **public et les prérequis** (par défaut : débutant complet, aucun prérequis) ;
 - l'**objectif de sortie** décliné en « à la fin, tu sauras… » (voir la charte).
 
@@ -31,7 +31,7 @@ Avec l'utilisateur, fixer :
 
 ## Étape 4 — Créer le squelette
 
-- Créer le dossier `<slug>/`.
+- Créer le dossier `<f-slug>/`.
 - Créer le `README.md` à partir de [`../templates/formation-README.md`](../templates/formation-README.md)
   (présentation, prérequis, objectifs, plan avec liens, projet fil rouge).
 - Optionnel : créer `projet-fil-rouge.md` si le projet mérite une page dédiée.

@@ -9,17 +9,17 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 
 ## Catalogue
 
-| Formation | Slug | Statut | Lien |
-| --- | --- | --- | --- |
-| Linux & Bash | `linux-bash` | terminée | [linux-bash/](linux-bash/) |
-| Algorithmes et structures de données | `algorithmes-et-structures-de-donnees` | idée | — |
-| TypeScript | `typescript` | idée | — |
-| Symfony | `symfony` | terminée | [symfony/](symfony/) |
-| Symfony avancé | `symfony-avance` | terminée | [symfony-avance/](symfony-avance/) |
-| JavaFX | `javafx` | idée | — |
-| Machine learning avec Python | `machine-learning-python` | idée | — |
-| IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | — |
-| Vim : coder sans souris | `vim` | terminée | [vim/](vim/) |
+| Formation | Slug | Statut | Lien                                   |
+| --- | --- | --- |----------------------------------------|
+| Linux & Bash | `linux-bash` | terminée | [f-linux-bash/](f-linux-bash/)         |
+| Algorithmes et structures de données | `algorithmes-et-structures-de-donnees` | idée | —                                      |
+| TypeScript | `typescript` | idée | —                                      |
+| Symfony | `symfony` | terminée | [f-symfony/](f-symfony/)               |
+| Symfony avancé | `symfony-avance` | terminée | [f-symfony-avance/](f-symfony-avance/) |
+| JavaFX | `javafx` | idée | —                                      |
+| Machine learning avec Python | `machine-learning-python` | idée | —                                      |
+| IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | —                                      |
+| Vim : coder sans souris | `vim` | terminée | [f-vim/](f-vim/)                       |
 
 Statuts possibles : `idée` · `en cours` · `terminée`.
 
@@ -31,5 +31,5 @@ formations/
 ├── README.md          ce fichier : catalogue des formations
 ├── consignes/         règles de conception à suivre pour toute formation
 ├── templates/         gabarits prêts à copier (README de formation, chapitre)
-└── <slug>/            une formation par sous-dossier
+└── <f-slug>/            une formation par sous-dossier
 ```
