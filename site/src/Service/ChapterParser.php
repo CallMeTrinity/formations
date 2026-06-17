@@ -21,6 +21,8 @@ final class ChapterParser
      */
     public function parse(string $markdown, string $formationSlug): ParsedChapter
     {
+        $markdown = $this->stripNavigation($markdown);
+
         ['title' => $title, 'sections' => $rawSections] = $this->parseLines($markdown);
 
         $sections = [];
@@ -38,6 +40,33 @@ final class ChapterParser
         }
 
         return new ParsedChapter(title: $title, sections: $sections);
+    }
+
+    /**
+     * Retire les barres de navigation du markdown source (en tête et pied de
+     * chapitre) : ce sont des doublons de la navigation du lecteur (template),
+     * et leurs liens pointent vers des fichiers .md. On reconnaît une ligne de
+     * nav à son lien « [Sommaire](README.md) ». Un séparateur --- resté orphelin
+     * en bas de chapitre après ce retrait est lui aussi supprimé.
+     */
+    private function stripNavigation(string $markdown): string
+    {
+        $lines = preg_split('/\R/', $markdown) ?: [];
+        $inFence = false;
+        $kept = [];
+
+        foreach ($lines as $line) {
+            if (preg_match('/^\s*(```|~~~)/', $line)) {
+                $inFence = !$inFence;
+            }
+            if (!$inFence && str_contains($line, '[Sommaire](README.md)')) {
+                continue; // ligne de navigation : on la jette
+            }
+            $kept[] = $line;
+        }
+
+        // Séparateur de bas de chapitre devenu orphelin une fois la nav retirée.
+        return preg_replace('/\n\s*(?:-{3,}|\*{3,}|_{3,})\s*$/', '', rtrim(implode("\n", $kept))) ?? '';
     }
 
     /**

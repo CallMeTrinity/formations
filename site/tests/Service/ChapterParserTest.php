@@ -86,6 +86,34 @@ final class ChapterParserTest extends TestCase
         self::assertStringContainsString('href="https://symfony.com"', $html);
     }
 
+    public function testStripsSourceNavigationAndOrphanSeparator(): void
+    {
+        $markdown = <<<'MD'
+            # Titre
+
+            [← Chapitre précédent](01-intro.md) · [Sommaire](README.md) · [Chapitre suivant →](03-suite.md)
+
+            ## Contenu
+
+            Du texte. Voir aussi le [sommaire détaillé](README.md#plan) dans le corps.
+
+            ---
+
+            [← Chapitre précédent](01-intro.md) · [Sommaire](README.md) · [Chapitre suivant →](03-suite.md)
+            MD;
+
+        $parsed = $this->parser->parse($markdown, 'symfony');
+        $html = $parsed->sections[0]->html;
+
+        // La nav du markdown (haut et bas) est retirée : aucun lien "Sommaire".
+        self::assertStringNotContainsString('Sommaire</a>', $html);
+        // Le séparateur --- orphelin de bas de chapitre ne laisse pas de <hr>.
+        self::assertStringNotContainsString('<hr', $html);
+        // Le contenu et ses propres liens vers README restent intacts.
+        self::assertStringContainsString('Du texte.', $html);
+        self::assertStringContainsString('href="/formations/symfony#plan"', $html);
+    }
+
     /**
      * @param list<ParsedSection> $sections
      */
