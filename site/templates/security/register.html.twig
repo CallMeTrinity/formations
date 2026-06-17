@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un compte — Formations{% endblock %}
+
+{% block body %}
+    <div class="container-page container-narrow py-12">
+        <div class="card max-w-md mx-auto">
+            <div class="mb-6">
+                <p class="eyebrow mb-2">Inscription</p>
+                <h1 class="text-2xl font-semibold tracking-tight">Crée ton compte</h1>
+                <p class="text-sm text-fg-secondary mt-1">Quelques secondes pour commencer à apprendre.</p>
+            </div>
+
+            {{ form_start(registrationForm, {attr: {class: 'space-y-4', novalidate: 'novalidate'}}) }}
+                {% if not registrationForm.vars.valid %}
+                    <div class="callout callout--danger" role="alert">
+                        <div class="callout__title">Vérifie le formulaire</div>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-1.5">
+                    {{ form_label(registrationForm.email) }}
+                    {{ form_widget(registrationForm.email, {attr: {class: 'input focus-ring'}}) }}
+                    {% for error in registrationForm.email.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(registrationForm.displayName) }}
+                    {{ form_widget(registrationForm.displayName, {attr: {class: 'input focus-ring'}}) }}
+                    {% for error in registrationForm.displayName.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(registrationForm.plainPassword) }}
+                    {{ form_widget(registrationForm.plainPassword, {attr: {class: 'input focus-ring'}}) }}
+                    <p class="field-help">Au moins 8 caractères.</p>
+                    {% for error in registrationForm.plainPassword.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn--primary btn--lg focus-ring w-full" type="submit">
+                    Créer mon compte
+                </button>
+            {{ form_end(registrationForm) }}
+        </div>
+
+        <p class="text-sm text-fg-secondary text-center mt-5">
+            Déjà un compte ?
+            <a href="{{ path('app_login') }}" class="link-accent">Se connecter</a>
+        </p>
+    </div>
+{% endblock %}
