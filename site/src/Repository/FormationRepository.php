@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Formation;
+use App\Enum\Visibility;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -14,6 +15,30 @@ class FormationRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Formation::class);
+    }
+
+    /**
+     * Formations visibles pour les listes, selon les droits de l'appelant.
+     *
+     * @return Formation[]
+     */
+    public function findVisible(bool $isAuthenticated, bool $isAdmin): array
+    {
+        $visibilities = [Visibility::PUBLIC];
+
+        if ($isAuthenticated) {
+            $visibilities[] = Visibility::BETA;
+        }
+        if ($isAdmin) {
+            $visibilities[] = Visibility::DRAFT;
+        }
+
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.visibility IN (:visibilities)')
+            ->setParameter('visibilities', $visibilities)
+            ->orderBy('f.title', 'ASC')
+            ->getQuery()
+            ->getResult();
     }
 
     //    /**
