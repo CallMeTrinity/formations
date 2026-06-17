@@ -32,7 +32,7 @@ class Chapter
     /**
      * @var Collection<int, Section>
      */
-    #[ORM\OneToMany(targetEntity: Section::class, mappedBy: 'chapter')]
+    #[ORM\OneToMany(targetEntity: Section::class, mappedBy: 'chapter', cascade: ['persist'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $sections;
 
