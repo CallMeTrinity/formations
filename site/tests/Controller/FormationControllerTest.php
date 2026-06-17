@@ -4,6 +4,8 @@ namespace App\Tests\Controller;
 
 use App\Entity\Chapter;
 use App\Entity\Formation;
+use App\Entity\Section;
+use App\Enum\SectionType;
 use App\Enum\Visibility;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -82,6 +84,103 @@ class FormationControllerTest extends WebTestCase
     public function testUnknownSlugReturns404(): void
     {
         $this->client->request('GET', '/formations/inconnue');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    /**
+     * Crée une formation à plusieurs chapitres, chacun avec une section de contenu.
+     */
+    private function createFormationWithChapters(string $slug, Visibility $visibility): Formation
+    {
+        $formation = (new Formation())
+            ->setSlug($slug)
+            ->setTitle('Titre '.$slug)
+            ->setDescription('<p>Description.</p>')
+            ->setVisibility($visibility);
+
+        foreach (['introduction' => 1, 'les-bases' => 2, 'pour-aller-plus-loin' => 3] as $chapterSlug => $position) {
+            $chapter = (new Chapter())
+                ->setSlug($chapterSlug)
+                ->setTitle('Chapitre '.$chapterSlug)
+                ->setPosition($position);
+
+            $section = new Section();
+            $section->setType(SectionType::CONTENT)
+                ->setTitle('Contenu')
+                ->setPosition(1)
+                ->setContent('<p>Texte du chapitre '.$chapterSlug.'.</p><details><summary>Corrigé</summary><p>La réponse.</p></details>');
+            $chapter->addSection($section);
+
+            $formation->addChapter($chapter);
+        }
+
+        $this->em->persist($formation);
+        $this->em->flush();
+
+        return $formation;
+    }
+
+    public function testChapterRendersContentAndPreservesDetails(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony/les-bases');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('h1', 'Chapitre les-bases');
+        self::assertSelectorTextContains('.prose-chapter', 'Texte du chapitre les-bases');
+        // Les blocs <details> (corrigés/quiz) sont conservés tels quels.
+        self::assertSelectorExists('.prose-chapter details summary');
+    }
+
+    public function testChapterShowsPreviousAndNextNavigation(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony/les-bases');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[rel="prev"][href="/formations/symfony/introduction"]');
+        self::assertSelectorExists('a[rel="next"][href="/formations/symfony/pour-aller-plus-loin"]');
+    }
+
+    public function testFirstChapterHasNoPreviousLink(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony/introduction');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('a[rel="prev"]');
+        self::assertSelectorExists('a[rel="next"][href="/formations/symfony/les-bases"]');
+    }
+
+    public function testLastChapterHasNoNextLink(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony/pour-aller-plus-loin');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('a[rel="next"]');
+        self::assertSelectorExists('a[rel="prev"][href="/formations/symfony/les-bases"]');
+    }
+
+    public function testUnknownChapterReturns404(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony/inconnu');
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testChapterOfDraftFormationReturns404(): void
+    {
+        $this->createFormationWithChapters('cachee', Visibility::DRAFT);
+
+        $this->client->request('GET', '/formations/cachee/introduction');
 
         self::assertResponseStatusCodeSame(404);
     }
