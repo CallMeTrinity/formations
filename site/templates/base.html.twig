@@ -48,16 +48,31 @@
             </div>
         </header>
 
-        <main class="flex-1">
-            {% for label, messages in app.flashes %}
-                {% for message in messages %}
-                    <div class="container-page mt-4">
-                        <div class="callout {{ label == 'success' ? 'callout--success' : (label == 'error' ? 'callout--danger' : '') }}">
-                            <div class="text-sm text-fg-secondary">{{ message }}</div>
-                        </div>
-                    </div>
+        {% set flashes = app.flashes %}
+        {% if flashes is not empty %}
+            <div
+                data-controller="toast"
+                data-toast-max-value="3"
+                class="fixed top-4 right-4 z-50 flex flex-col gap-2 w-[min(92vw,360px)]"
+                aria-live="polite"
+            >
+                {% for label, messages in flashes %}
+                    {% for message in messages %}
+                        <button
+                            type="button"
+                            data-toast-target="item"
+                            data-action="toast#dismiss"
+                            class="toast {{ label == 'success' ? 'toast--success' : (label == 'error' ? 'toast--danger' : '') }}"
+                        >
+                            <span class="toast__msg">{{ message }}</span>
+                            <span class="toast__close" aria-hidden="true">&times;</span>
+                        </button>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
+            </div>
+        {% endif %}
+
+        <main class="flex-1">
             {% block body %}{% endblock %}
         </main>
 
