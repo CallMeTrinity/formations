@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes préférences — Formations{% endblock %}
+
+{% block body %}
+    <div class="container-page container-narrow py-12 space-y-8">
+        <div>
+            <p class="eyebrow mb-2">Mon compte</p>
+            <h1 class="text-2xl font-semibold tracking-tight">Préférences</h1>
+            <p class="text-sm text-fg-secondary mt-1">
+                On s'en sert pour personnaliser tes recommandations de formations.
+            </p>
+            <a href="{{ path('app_profile') }}" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg inline-block mt-3">
+                ← Retour au profil
+            </a>
+        </div>
+
+        <div class="card max-w-md">
+            {{ form_start(preferencesForm, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
+                {% if not preferencesForm.vars.valid %}
+                    <div class="callout callout--danger" role="alert">
+                        <div class="callout__title">Vérifie le formulaire</div>
+                    </div>
+                {% endif %}
+
+                {# ── Thèmes préférés (cases à cocher rendues en chips) ──────── #}
+                <div class="space-y-2">
+                    <span class="field-label block">{{ form_label(preferencesForm.preferredTags) }}</span>
+                    <p class="field-help">Sélectionne les sujets qui t'intéressent le plus.</p>
+
+                    {% if preferencesForm.preferredTags|length > 0 %}
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            {% for tag in preferencesForm.preferredTags %}
+                                <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
+                                    {{ form_widget(tag, {attr: {class: 'accent-accent'}}) }}
+                                    {{ tag.vars.label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-muted">Aucun thème disponible pour le moment.</p>
+                    {% endif %}
+
+                    {% for error in preferencesForm.preferredTags.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                {# ── Niveau préféré ─────────────────────────────────────────── #}
+                <div class="space-y-1.5">
+                    {{ form_label(preferencesForm.preferredDifficulty) }}
+                    {{ form_widget(preferencesForm.preferredDifficulty) }}
+                    <p class="field-help">Laisse sur « Peu importe » pour voir tous les niveaux.</p>
+                    {% for error in preferencesForm.preferredDifficulty.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                {# ── Objectif hebdomadaire ──────────────────────────────────── #}
+                <div class="space-y-1.5">
+                    {{ form_label(preferencesForm.weeklyGoalMinutes) }}
+                    {{ form_widget(preferencesForm.weeklyGoalMinutes) }}
+                    <p class="field-help">Optionnel. Le temps que tu veux consacrer aux formations chaque semaine.</p>
+                    {% for error in preferencesForm.weeklyGoalMinutes.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn--primary focus-ring" type="submit">
+                    Enregistrer mes préférences
+                </button>
+            {{ form_end(preferencesForm) }}
+        </div>
+    </div>
+{% endblock %}
