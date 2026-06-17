@@ -8,8 +8,8 @@ use App\Entity\Formation;
 use App\Entity\Section;
 use App\Repository\FormationRepository;
 use App\Service\ChapterParser;
+use App\Service\ReadmeParser;
 use Doctrine\ORM\EntityManagerInterface;
-use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Exception\CommonMarkException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -36,7 +36,7 @@ final class FormationsSyncCommand extends Command
         private readonly string $formationsContentDir,
         private readonly FormationRepository $formationRepository,
         private readonly ChapterParser $chapterParser,
-        private readonly CommonMarkConverter $converter,
+        private readonly ReadmeParser $readmeParser,
     ) {
         parent::__construct();
     }
@@ -65,7 +65,7 @@ final class FormationsSyncCommand extends Command
         foreach ($formationDirs as $dir) {
             $slug = $dir->getBasename();
 
-            $readme = $this->parseReadme((string) file_get_contents($dir->getPathname().'/README.md'));
+            $readme = $this->readmeParser->parse((string) file_get_contents($dir->getPathname().'/README.md'), $slug);
             if (null === $readme) {
                 $io->warning(sprintf('"%s" ignorée : aucun titre H1 dans README.md.', $slug));
                 continue;
@@ -82,11 +82,14 @@ final class FormationsSyncCommand extends Command
 
             // Champs CONTENU uniquement. On ne touche jamais aux champs admin
             // (visibility, difficulty, tags, estimatedMinutes) ni au statut éditorial.
-            // La description (markdown inline) est convertie en HTML, comme les
-            // sections de chapitre (cf. ChapterParser).
+            // Tous les blocs du README sont déjà rendus en HTML par le ReadmeParser,
+            // comme les sections de chapitre (cf. ChapterParser).
             $formation
-                ->setTitle($readme['title'])
-                ->setDescription($this->converter->convert($readme['description'])->getContent());
+                ->setTitle($readme->title)
+                ->setDescription($readme->description)
+                ->setPrerequisites($readme->prerequisites)
+                ->setObjectives($readme->objectives)
+                ->setProject($readme->project);
 
             $chaptersCount += $this->syncChapters($formation, $dir->getPathname(), $slug);
         }
@@ -101,47 +104,6 @@ final class FormationsSyncCommand extends Command
         ));
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * Extrait le titre (H1) et la description (premier paragraphe) d'un README de formation.
-     *
-     * @return array{title: string, description: string}|null null si aucun H1 n'est trouvé
-     */
-    private function parseReadme(string $content): ?array
-    {
-        $lines = preg_split('/\R/', $content) ?: [];
-        $title = '';
-        $descriptionLines = [];
-        $inDescription = false;
-
-        foreach ($lines as $line) {
-            if ('' === $title) {
-                if (preg_match('/^#\s+(.+)$/', $line, $m)) {
-                    $title = trim($m[1]);
-                }
-                continue; // rien n'est collecté avant le H1
-            }
-
-            // Une ligne vide après le début du paragraphe le clôt.
-            if ($inDescription && '' === trim($line)) {
-                break;
-            }
-            // Un nouveau titre (## …) avant tout texte : pas de description.
-            if (preg_match('/^#{1,6}\s+/', $line)) {
-                break;
-            }
-            if ('' !== trim($line)) {
-                $descriptionLines[] = trim($line);
-                $inDescription = true;
-            }
-        }
-
-        if ('' === $title) {
-            return null;
-        }
-
-        return ['title' => $title, 'description' => trim(implode(' ', $descriptionLines))];
     }
 
     /**
