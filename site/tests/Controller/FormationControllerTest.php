@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Chapter;
+use App\Entity\Enrollment;
 use App\Entity\Formation;
 use App\Entity\Section;
 use App\Entity\User;
@@ -245,5 +246,95 @@ class FormationControllerTest extends WebTestCase
         $this->client->request('GET', '/formations/vim/introduction');
 
         self::assertResponseRedirects('/login');
+    }
+
+    public function testEnrollCreatesEnrollment(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations/symfony');
+        $this->client->submitForm('Suivre cette formation');
+
+        self::assertResponseRedirects('/formations/symfony');
+
+        $enrollment = $this->em->getRepository(Enrollment::class)
+            ->findOneByUserAndFormation($user, $formation);
+        self::assertNotNull($enrollment);
+        self::assertNotNull($enrollment->getStartedAt());
+        self::assertNotNull($enrollment->getLastActivityAt());
+    }
+
+    public function testEnrollIsIdempotentWhenAlreadyEnrolled(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        // Premier suivi via le formulaire (jeton CSRF valide, lié à la session).
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        $this->client->submitForm('Suivre cette formation');
+
+        // Rejoue la même action « suivre » : le garde-fou évite le doublon.
+        $this->client->request('POST', '/formations/symfony/suivre', ['_token' => $token]);
+
+        self::assertResponseRedirects('/formations/symfony');
+        self::assertSame(1, $this->em->getRepository(Enrollment::class)
+            ->count(['user' => $user, 'formation' => $formation]));
+    }
+
+    public function testUnenrollRemovesEnrollment(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        // Suivre, puis quitter, chacun via son formulaire rendu.
+        $this->client->request('GET', '/formations/symfony');
+        $this->client->submitForm('Suivre cette formation');
+        $this->client->request('GET', '/formations/symfony');
+        $this->client->submitForm('Quitter cette formation');
+
+        self::assertResponseRedirects('/formations/symfony');
+        self::assertNull($this->em->getRepository(Enrollment::class)
+            ->findOneByUserAndFormation($user, $formation));
+    }
+
+    public function testUnenrollWhenNotEnrolledIsHarmless(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        // Suivre pour obtenir un jeton « quitter » valide, quitter, puis rejouer « quitter ».
+        $this->client->request('GET', '/formations/symfony');
+        $this->client->submitForm('Suivre cette formation');
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('input[name="_token"]')->attr('value');
+        $this->client->submitForm('Quitter cette formation');
+
+        $this->client->request('POST', '/formations/symfony/quitter', ['_token' => $token]);
+
+        self::assertResponseRedirects('/formations/symfony');
+        self::assertSame(0, $this->em->getRepository(Enrollment::class)
+            ->count(['user' => $user, 'formation' => $formation]));
+    }
+
+    public function testEnrollRequiresAuthentication(): void
+    {
+        $this->createFormation('symfony', Visibility::PUBLIC);
+
+        // Anonyme : refus par le firewall avant même le contrôleur, peu importe le jeton.
+        $this->client->request('POST', '/formations/symfony/suivre', ['_token' => 'peu-importe']);
+
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testEnrollRejectsInvalidCsrfToken(): void
+    {
+        $this->loginUser();
+        $this->createFormation('symfony', Visibility::PUBLIC);
+
+        $this->client->request('POST', '/formations/symfony/suivre', ['_token' => 'invalide']);
+
+        self::assertResponseStatusCodeSame(403);
     }
 }

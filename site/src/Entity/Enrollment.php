@@ -34,7 +34,7 @@ class Enrollment
     /**
      * @var Collection<int, ChapterProgress>
      */
-    #[ORM\OneToMany(targetEntity: ChapterProgress::class, mappedBy: 'enrollment')]
+    #[ORM\OneToMany(targetEntity: ChapterProgress::class, mappedBy: 'enrollment', cascade: ['remove'], orphanRemoval: true)]
     private Collection $chapterProgress;
 
     public function __construct()
