@@ -41,6 +41,33 @@ class FormationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Candidates pour la recommandation : formations dont la visibilité est
+     * autorisée et que l'utilisateur n'a pas encore terminées.
+     *
+     * @param list<Visibility> $visibilities visibilités autorisées pour l'appelant
+     * @param list<int>        $excludedIds  identifiants à exclure (formations déjà terminées)
+     *
+     * @return Formation[]
+     */
+    public function findRecommendable(array $visibilities, array $excludedIds): array
+    {
+        if ([] === $visibilities) {
+            return [];
+        }
+
+        $qb = $this->createQueryBuilder('f')
+            ->andWhere('f.visibility IN (:visibilities)')
+            ->setParameter('visibilities', $visibilities);
+
+        if ([] !== $excludedIds) {
+            $qb->andWhere('f.id NOT IN (:excludedIds)')
+                ->setParameter('excludedIds', $excludedIds);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     //    /**
     //     * @return Formation[] Returns an array of Formation objects
     //     */

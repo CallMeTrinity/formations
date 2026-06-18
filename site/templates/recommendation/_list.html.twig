@@ -1,0 +1,6 @@
+{# Grille de cartes de recommandation. `recommendations` = list<Formation>. #}
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for formation in recommendations %}
+        {{ include('recommendation/_card.html.twig', { formation: formation }) }}
+    {% endfor %}
+</div>

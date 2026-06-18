@@ -40,6 +40,29 @@
     </div>
 </section>
 
+{% if recommendations is not empty %}
+<section class="border-b border-line bg-surface-inset">
+    <div class="container-page py-16">
+        <div class="flex items-end justify-between gap-4 flex-wrap mb-6">
+            <div>
+                <p class="eyebrow mb-3">{{ personalized ? 'Recommandé pour toi' : 'À découvrir' }}</p>
+                <h2 class="text-2xl font-bold tracking-tight text-fg">
+                    {{ personalized ? 'Des formations choisies selon tes préférences' : 'Les formations populaires du moment' }}
+                </h2>
+                {% if not personalized and app.user %}
+                    <p class="text-sm text-muted mt-2">
+                        <a href="{{ path('app_preferences') }}" class="link-accent">Renseigne tes préférences</a>
+                        pour des suggestions adaptées à tes tags et ton niveau.
+                    </p>
+                {% endif %}
+            </div>
+            <a href="{{ path('app_recommendations') }}" class="btn btn--secondary focus-ring shrink-0">Voir tout</a>
+        </div>
+        {{ include('recommendation/_list.html.twig', { recommendations: recommendations }) }}
+    </div>
+</section>
+{% endif %}
+
 <section>
     <div class="container-page py-16">
         <p class="eyebrow mb-3">Comment ça marche</p>

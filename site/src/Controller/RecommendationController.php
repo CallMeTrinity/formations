@@ -8,19 +8,24 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-class HomeController extends AbstractController
+final class RecommendationController extends AbstractController
 {
-    #[Route('/', name: 'app_home')]
+    /**
+     * Page dédiée « Recommandations » : la même logique que la section d'accueil,
+     * mais avec une liste plus large. Personnalisée selon les préférences, ou
+     * repli sur les formations publiques populaires/récentes (issues #24, #25).
+     */
+    #[Route('/recommandations', name: 'app_recommendations', methods: ['GET'])]
     public function index(RecommendationService $recommendations): Response
     {
         $user = $this->getUser() instanceof User ? $this->getUser() : null;
 
-        return $this->render('home/index.html.twig', [
+        return $this->render('recommendation/index.html.twig', [
             'recommendations' => $recommendations->recommendFor(
                 $user,
                 $this->isGranted('ROLE_USER'),
                 $this->isGranted('ROLE_ADMIN'),
-                3,
+                9,
             ),
             'personalized' => $recommendations->isPersonalizedFor($user),
         ]);
