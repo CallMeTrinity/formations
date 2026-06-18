@@ -10,6 +10,7 @@ use App\Enum\Difficulty;
 use App\Enum\Visibility;
 use App\Repository\FormationRepository;
 use App\Service\ChapterParser;
+use App\Service\FormationSyncService;
 use App\Service\ReadmeParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -126,7 +127,7 @@ final class FormationsSyncCommandTest extends KernelTestCase
 
     private function runSync(): void
     {
-        $command = new FormationsSyncCommand(
+        $service = new FormationSyncService(
             $this->em,
             self::FIXTURES_DIR,
             $this->formationRepository(),
@@ -134,7 +135,7 @@ final class FormationsSyncCommandTest extends KernelTestCase
             self::getContainer()->get(ReadmeParser::class),
         );
 
-        $tester = new CommandTester($command);
+        $tester = new CommandTester(new FormationsSyncCommand($service));
         $tester->execute([]);
         $tester->assertCommandIsSuccessful();
     }

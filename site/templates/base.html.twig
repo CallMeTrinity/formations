@@ -37,6 +37,10 @@
                         <a href="{{ path('app_dashboard') }}" class="text-fg-secondary no-underline hover:text-fg">Mes formations</a>
                     {% endif %}
                     <a href="{{ path('app_recommendations') }}" class="text-fg-secondary no-underline hover:text-fg">Recommandations</a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                        {% set isAdmin = app.request.attributes.get('_route') starts with 'app_admin' %}
+                        <a href="{{ path('app_admin_formations') }}" class="no-underline {{ isAdmin ? 'text-fg font-medium' : 'text-fg-secondary hover:text-fg' }}">Admin</a>
+                    {% endif %}
                 </nav>
                 <div class="ml-auto flex items-center gap-3">
                     {% if app.user %}

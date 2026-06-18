@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — Formations{% endblock %}
+
+{% block body %}
+    <section class="border-b border-line">
+        <div class="container-page py-12 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+                <p class="eyebrow mb-3">Espace admin</p>
+                <h1 class="text-3xl font-bold tracking-tight text-fg mb-3">Formations</h1>
+                <p class="text-md text-fg-secondary max-w-[60ch]">
+                    Statut éditorial, visibilité et métadonnées de toutes les formations,
+                    brouillons compris.
+                </p>
+            </div>
+            {# Resynchronisation du contenu markdown → base. #}
+            <form method="post" action="{{ path('app_admin_resync') }}" class="shrink-0">
+                <input type="hidden" name="_token" value="{{ csrf_token('admin_resync') }}">
+                <button type="submit" class="btn btn--secondary focus-ring">Resynchroniser le contenu</button>
+            </form>
+        </div>
+    </section>
+
+    <section>
+        <div class="container-page py-10">
+            {% if formations is empty %}
+                <div class="callout">
+                    Aucune formation en base. Lance une resynchronisation pour importer le contenu.
+                </div>
+            {% else %}
+                <div class="card overflow-x-auto p-0">
+                    <table class="w-full text-sm">
+                        <thead>
+                        <tr class="border-b border-line text-left text-muted">
+                            <th class="font-medium px-4 py-3">Formation</th>
+                            <th class="font-medium px-4 py-3">Statut</th>
+                            <th class="font-medium px-4 py-3">Visibilité</th>
+                            <th class="font-medium px-4 py-3">Difficulté</th>
+                            <th class="font-medium px-4 py-3">Chapitres</th>
+                            <th class="font-medium px-4 py-3">Durée</th>
+                            <th class="font-medium px-4 py-3 text-right">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for formation in formations %}
+                            <tr class="border-b border-line last:border-0">
+                                <td class="px-4 py-3">
+                                    <a href="{{ path('app_formation_show', { slug: formation.slug }) }}"
+                                       class="font-medium text-fg link-accent no-underline">{{ formation.title }}</a>
+                                    <div class="font-mono text-xs text-muted">{{ formation.slug }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span
+                                        class="badge {{ formation.status.value == 'done' ? 'badge--success' : 'badge--neutral' }}">{{ formation.status.label }}</span>
+                                </td>
+                                <turbo-frame id="visibility-{{ formation.id }}">
+                                    <td class="px-4 py-3">
+                                        {# Accès rapide à la visibilité, effet immédiat. #}
+                                        <form
+                                            method="post"
+                                            data-turbo-frame="visibility-{{ formation.id }}"
+                                            action="{{ path('app_admin_formation_visibility', { slug: formation.slug }) }}"
+                                            data-controller="auto-submit"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <input type="hidden" name="_token"
+                                                   value="{{ csrf_token('admin_visibility' ~ formation.id) }}">
+                                            <select name="visibility" class="select"
+                                                    data-action="change->auto-submit#submit"
+                                                    aria-label="Visibilité de {{ formation.title }}">
+                                                {% for visibility in visibilities %}
+                                                    <option
+                                                        value="{{ visibility.value }}" {{ visibility == formation.visibility ? 'selected' }}>{{ visibility.label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" data-auto-submit-target="submit"
+                                                    class="btn btn--secondary btn--sm focus-ring">OK
+                                            </button>
+                                        </form>
+                                    </td>
+                                </turbo-frame>
+                                <td class="px-4 py-3 text-fg-secondary">{{ formation.difficulty ? formation.difficulty.label : '—' }}</td>
+                                <td class="px-4 py-3 text-fg-secondary">{{ formation.chapters|length }}</td>
+                                <td class="px-4 py-3 text-fg-secondary">{{ formation.estimatedMinutes ? formation.estimatedMinutes ~ ' min' : '—' }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <a href="{{ path('app_admin_formation_edit', { slug: formation.slug }) }}"
+                                       class="btn btn--ghost btn--sm focus-ring">Éditer</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

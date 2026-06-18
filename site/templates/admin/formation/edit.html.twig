@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin — {{ formation.title }}{% endblock %}
+
+{% block body %}
+    <div class="container-page container-narrow py-12 space-y-8">
+        <div>
+            <p class="eyebrow mb-2">Espace admin</p>
+            <h1 class="text-2xl font-semibold tracking-tight">{{ formation.title }}</h1>
+            <p class="text-sm text-fg-secondary mt-1">
+                Métadonnées admin. Elles sont préservées par la synchronisation du contenu.
+            </p>
+            <a href="{{ path('app_admin_formations') }}" class="text-sm text-fg-secondary no-underline font-medium hover:text-fg inline-block mt-3">
+                ← Retour à la liste
+            </a>
+        </div>
+
+        <div class="card max-w-md">
+            {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
+                {% if not form.vars.valid %}
+                    <div class="callout callout--danger" role="alert">
+                        <div class="callout__title">Vérifie le formulaire</div>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.status) }}
+                    {{ form_widget(form.status) }}
+                    {% for error in form.status.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.difficulty) }}
+                    {{ form_widget(form.difficulty) }}
+                    {% for error in form.difficulty.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-1.5">
+                    {{ form_label(form.estimatedMinutes) }}
+                    {{ form_widget(form.estimatedMinutes) }}
+                    {% for error in form.estimatedMinutes.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                {# Tags (cases à cocher rendues en chips). #}
+                <div class="space-y-2">
+                    <span class="field-label block">{{ form_label(form.tags) }}</span>
+                    {% if form.tags|length > 0 %}
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            {% for tag in form.tags %}
+                                <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
+                                    {{ form_widget(tag, {attr: {class: 'accent-accent'}}) }}
+                                    {{ tag.vars.label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-muted">Aucun tag disponible pour le moment.</p>
+                    {% endif %}
+                    {% for error in form.tags.vars.errors %}
+                        <p class="text-xs text-danger">{{ error.message }}</p>
+                    {% endfor %}
+                </div>
+
+                <button class="btn btn--primary focus-ring" type="submit">Enregistrer</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
