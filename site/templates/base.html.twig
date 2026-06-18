@@ -4,8 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Formations{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><rect width=%22128%22 height=%22128%22 rx=%2212%22 fill=%22%23d9622b%22/></svg>">
-
+        <link rel="icon" href="/logo.png" type="image/png">
         {# Polices du design system : IBM Plex Sans + IBM Plex Mono #}
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,7 +26,7 @@
         <header class="border-b border-line bg-surface">
             <div class="container-page h-16 flex items-center gap-6">
                 <a href="{{ path('app_home') }}" class="flex items-center gap-2 no-underline focus-ring">
-                    <span class="inline-block size-[18px] rounded-sm bg-accent"></span>
+                    <img src="/logo.png" class="inline-block size-[18px]"></img>
                     <span class="font-mono text-md font-semibold text-fg tracking-tight">formations</span>
                 </a>
                 <nav class="ml-4 flex items-center gap-5 text-sm">
