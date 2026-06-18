@@ -1,0 +1,4 @@
+{# Met à jour le bouton « terminer / annuler » du chapitre sans rechargement. #}
+<turbo-stream action="update" target="chapter-complete">
+    <template>{{ include('formation/_chapter_complete.html.twig', { formation: formation, chapter: chapter, completed: completed }) }}</template>
+</turbo-stream>

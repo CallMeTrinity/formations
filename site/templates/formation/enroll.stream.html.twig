@@ -1,0 +1,4 @@
+{# Met à jour tous les contrôles « suivre / quitter » de la page (haut et bas). #}
+<turbo-stream action="update" targets=".enroll-control">
+    <template>{{ include('formation/_enroll.html.twig', { formation: formation, enrollment: enrollment }) }}</template>
+</turbo-stream>

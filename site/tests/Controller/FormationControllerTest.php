@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Chapter;
+use App\Entity\ChapterProgress;
 use App\Entity\Enrollment;
 use App\Entity\Formation;
 use App\Entity\Section;
@@ -24,6 +25,13 @@ class FormationControllerTest extends WebTestCase
         $this->em = static::getContainer()->get('doctrine.orm.entity_manager');
 
         // Repart d'une base propre (le contenu vient normalement de la sync).
+        // Ordre imposé par les contraintes FK : progression, puis inscriptions, puis formations.
+        foreach ($this->em->getRepository(ChapterProgress::class)->findAll() as $progress) {
+            $this->em->remove($progress);
+        }
+        foreach ($this->em->getRepository(Enrollment::class)->findAll() as $enrollment) {
+            $this->em->remove($enrollment);
+        }
         foreach ($this->em->getRepository(Formation::class)->findAll() as $formation) {
             $this->em->remove($formation);
         }
@@ -336,5 +344,329 @@ class FormationControllerTest extends WebTestCase
         $this->client->request('POST', '/formations/symfony/suivre', ['_token' => 'invalide']);
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * Inscrit l'utilisateur, avec une dernière activité volontairement ancienne
+     * pour pouvoir vérifier qu'une action la rafraîchit.
+     */
+    private function enroll(User $user, Formation $formation): Enrollment
+    {
+        $past = new \DateTimeImmutable('2000-01-01');
+        $enrollment = (new Enrollment())
+            ->setUser($user)
+            ->setFormation($formation)
+            ->setStartedAt($past)
+            ->setLastActivityAt($past);
+
+        $this->em->persist($enrollment);
+        $this->em->flush();
+
+        return $enrollment;
+    }
+
+    /**
+     * Soumet le formulaire « terminer / annuler » de la page chapitre (jeton CSRF
+     * inclus), indépendamment du libellé du bouton. Sans Turbo, l'action redirige :
+     * on suit la redirection pour retomber sur une page complète.
+     */
+    private function submitChapterCompleteForm(string $path): void
+    {
+        $crawler = $this->client->request('GET', $path);
+        $this->client->submit($crawler->filter('#chapter-complete form')->form());
+        $this->client->followRedirect();
+    }
+
+    public function testMarkChapterCompleteCreatesProgressAndRefreshesActivity(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->submitChapterCompleteForm('/formations/symfony/introduction');
+
+        self::assertResponseIsSuccessful();
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNotNull($enrollment);
+        self::assertSame(1, $this->em->getRepository(ChapterProgress::class)->count(['enrollment' => $enrollment]));
+        self::assertGreaterThan(new \DateTimeImmutable('2000-01-02'), $enrollment->getLastActivityAt());
+    }
+
+    public function testMarkChapterCompleteTogglesOff(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+
+        // Marquer puis annuler : on retombe à zéro progression.
+        $this->submitChapterCompleteForm('/formations/symfony/introduction');
+        $this->submitChapterCompleteForm('/formations/symfony/introduction');
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(0, $this->em->getRepository(ChapterProgress::class)->count(['enrollment' => $enrollment]));
+    }
+
+    public function testMarkChapterCompleteWhenNotEnrolledIsHarmless(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        // Récupère un jeton valide via le formulaire rendu, puis désinscrit l'utilisateur.
+        $crawler = $this->client->request('GET', '/formations/symfony/introduction');
+        $token = $crawler->filter('#chapter-complete form input[name="_token"]')->attr('value');
+
+        // Le kernel a redémarré : on repart d'un em frais pour écrire en base.
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $em->remove($em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation));
+        $em->flush();
+
+        $this->client->request('POST', '/formations/symfony/introduction/complete', ['_token' => $token]);
+
+        self::assertResponseRedirects('/formations/symfony');
+        self::assertSame(0, static::getContainer()->get('doctrine.orm.entity_manager')->getRepository(ChapterProgress::class)->count([]));
+    }
+
+    public function testMarkChapterCompleteRejectsInvalidCsrfToken(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('POST', '/formations/symfony/introduction/complete', ['_token' => 'invalide']);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testMarkChapterCompleteRequiresAuthentication(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('POST', '/formations/symfony/introduction/complete', ['_token' => 'peu-importe']);
+
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testVisitingNextChapterMarksPreviousCompleted(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        // Aller au 2e chapitre marque automatiquement le 1er comme terminé (mais pas le courant).
+        $this->client->request('GET', '/formations/symfony/les-bases');
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(['introduction'], $this->completedChapterSlugs($user, 'symfony'));
+    }
+
+    /**
+     * Slugs des chapitres terminés pour une formation, scoping par l'inscription
+     * (robuste aux éventuels chapitres orphelins laissés par d'autres tests).
+     *
+     * @return list<string>
+     */
+    private function completedChapterSlugs(User $user, string $formationSlug): array
+    {
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $formation = $em->getRepository(Formation::class)->findOneBy(['slug' => $formationSlug]);
+        $enrollment = $em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        $progress = $em->getRepository(ChapterProgress::class);
+
+        $slugs = [];
+        foreach ($formation->getChapters() as $chapter) {
+            if (null !== $progress->findOneByEnrollmentAndChapter($enrollment, $chapter)) {
+                $slugs[] = $chapter->getSlug();
+            }
+        }
+
+        return $slugs;
+    }
+
+    public function testVisitingFirstChapterMarksNothing(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('GET', '/formations/symfony/introduction');
+
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $enrollment = $em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertSame(0, $em->getRepository(ChapterProgress::class)->count(['enrollment' => $enrollment]));
+    }
+
+    public function testSummaryMarksCompletedChapters(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        // Visiter le 2e chapitre termine le 1er, qui doit apparaître « Terminé » au sommaire.
+        $this->client->request('GET', '/formations/symfony/les-bases');
+        $this->client->request('GET', '/formations/symfony');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('ol li:first-child', 'Terminé');
+    }
+
+    public function testEnrollViaTurboReturnsStream(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('.enroll-control input[name="_token"]')->first()->attr('value');
+
+        // Requête « Turbo » : on simule l'en-tête Accept envoyé par Turbo.
+        $this->client->request(
+            'POST',
+            '/formations/symfony/suivre',
+            ['_token' => $token],
+            [],
+            ['HTTP_ACCEPT' => 'text/vnd.turbo-stream.html'],
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('text/vnd.turbo-stream.html', (string) $this->client->getResponse()->headers->get('Content-Type'));
+        self::assertStringContainsString('<turbo-stream', (string) $this->client->getResponse()->getContent());
+        self::assertNotNull(static::getContainer()->get('doctrine.orm.entity_manager')
+            ->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation));
+    }
+
+    /**
+     * Marque tous les chapitres d'une formation comme terminés pour l'inscription.
+     */
+    private function completeAllChapters(Enrollment $enrollment, Formation $formation): void
+    {
+        $now = new \DateTimeImmutable();
+        foreach ($formation->getChapters() as $chapter) {
+            $this->em->persist(
+                (new ChapterProgress())
+                    ->setEnrollment($enrollment)
+                    ->setChapter($chapter)
+                    ->setCompletedAt($now)
+            );
+        }
+        $this->em->flush();
+    }
+
+    public function testCompleteButtonHiddenWhileChaptersRemain(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('GET', '/formations/symfony');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('form[action="/formations/symfony/terminer"]');
+    }
+
+    public function testCompleteButtonAppearsWhenAllChaptersDone(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        $this->client->request('GET', '/formations/symfony');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[action="/formations/symfony/terminer"]');
+    }
+
+    public function testCompleteFormationSetsCompletedAt(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        self::assertResponseRedirects('/formations/symfony');
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNotNull($enrollment->getCompletedAt());
+        self::assertGreaterThan(new \DateTimeImmutable('2000-01-02'), $enrollment->getLastActivityAt());
+    }
+
+    public function testCompleteFormationRejectedWhenChaptersIncomplete(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        // Jeton valide récupéré quand tout est terminé...
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('form[action="/formations/symfony/terminer"] input[name="_token"]')->first()->attr('value');
+
+        // ... mais on retire une progression : la formation n'est plus complétable.
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $formation = $em->getRepository(Formation::class)->findOneBy(['slug' => 'symfony']);
+        $enrollment = $em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        $progress = $em->getRepository(ChapterProgress::class)->findOneBy(['enrollment' => $enrollment]);
+        $em->remove($progress);
+        $em->flush();
+
+        $this->client->request('POST', '/formations/symfony/terminer', ['_token' => $token]);
+
+        self::assertResponseRedirects('/formations/symfony');
+        $em = static::getContainer()->get('doctrine.orm.entity_manager');
+        $enrollment = $em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNull($enrollment->getCompletedAt());
+    }
+
+    public function testCompleteFormationRejectsInvalidCsrfToken(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('POST', '/formations/symfony/terminer', ['_token' => 'invalide']);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testCompleteFormationRequiresAuthentication(): void
+    {
+        $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+
+        $this->client->request('POST', '/formations/symfony/terminer', ['_token' => 'peu-importe']);
+
+        self::assertResponseRedirects('/login');
+    }
+
+    public function testCompleteFormationViaTurboReturnsStream(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('form[action="/formations/symfony/terminer"] input[name="_token"]')->first()->attr('value');
+
+        $this->client->request(
+            'POST',
+            '/formations/symfony/terminer',
+            ['_token' => $token],
+            [],
+            ['HTTP_ACCEPT' => 'text/vnd.turbo-stream.html'],
+        );
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('text/vnd.turbo-stream.html', (string) $this->client->getResponse()->headers->get('Content-Type'));
+        self::assertStringContainsString('<turbo-stream', (string) $this->client->getResponse()->getContent());
+
+        $enrollment = static::getContainer()->get('doctrine.orm.entity_manager')
+            ->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNotNull($enrollment->getCompletedAt());
     }
 }

@@ -1,0 +1,9 @@
+{# Contrôle « suivre / quitter » placé en haut et en bas de la page formation.
+   La classe .enroll-control sert de cible au turbo-stream (mise à jour des deux). #}
+<div class="enroll-control flex flex-wrap items-center gap-3">
+    {% if app.user %}
+        {{ include('formation/_enroll.html.twig', { formation: formation, enrollment: enrollment, allChaptersCompleted: allChaptersCompleted|default(false) }) }}
+    {% else %}
+        <a href="{{ path('app_login') }}" class="btn btn--primary focus-ring">Se connecter pour suivre</a>
+    {% endif %}
+</div>

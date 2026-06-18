@@ -1,0 +1,14 @@
+{# Contenu interne du bouton « terminer / annuler » d'un chapitre.
+   Rendu au chargement (dans #chapter-complete) ET par chapter_complete.stream.html.twig,
+   qui met à jour ce conteneur sans rechargement. #}
+<form method="post" action="{{ path('app_formation_chapter_complete', { slug: formation.slug, chapterSlug: chapter.slug }) }}">
+    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ chapter.id) }}">
+    {% if completed %}
+        <button type="submit" class="btn btn--secondary focus-ring">
+            <span class="text-success" aria-hidden="true">&checkmark;</span>
+            <span>Terminé — annuler</span>
+        </button>
+    {% else %}
+        <button type="submit" class="btn btn--primary focus-ring">Marquer comme terminé</button>
+    {% endif %}
+</form>
