@@ -6,6 +6,10 @@
 {% if enrollment %}
     {% if enrollment.completedAt %}
         <span class="badge badge--success">Formation terminée le {{ enrollment.completedAt|date('d/m/Y') }}</span>
+    {% elseif enrollment.firstCompletedAt %}
+        {# Run en cours après un « recommencer » : on garde visible la 1re complétion. #}
+        <span class="badge badge--success">Déjà terminée le {{ enrollment.firstCompletedAt|date('d/m/Y') }}</span>
+        <span class="badge">Tu la suis à nouveau</span>
     {% else %}
         <span class="badge badge--success">Tu suis cette formation</span>
     {% endif %}
@@ -17,10 +21,22 @@
         </form>
     {% endif %}
 
-    <form method="post" action="{{ path('app_formation_unenroll', { slug: formation.slug }) }}">
-        <input type="hidden" name="_token" value="{{ csrf_token('unenroll' ~ formation.id) }}">
-        <button type="submit" class="btn focus-ring">Quitter cette formation</button>
-    </form>
+    {# Recommencer : proposé une fois le run courant terminé. #}
+    {% if enrollment.completedAt %}
+        <form method="post" action="{{ path('app_formation_restart', { slug: formation.slug }) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('restart_formation' ~ formation.id) }}">
+            <button type="submit" class="btn btn--secondary focus-ring">Recommencer la formation</button>
+        </form>
+    {% endif %}
+
+    {# Quitter : seulement tant que la formation n'a jamais été terminée
+       (sinon on conserve la trace d'historique). #}
+    {% if not enrollment.firstCompletedAt %}
+        <form method="post" action="{{ path('app_formation_unenroll', { slug: formation.slug }) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('unenroll' ~ formation.id) }}">
+            <button type="submit" class="btn focus-ring">Quitter cette formation</button>
+        </form>
+    {% endif %}
 {% else %}
     <form method="post" action="{{ path('app_formation_enroll', { slug: formation.slug }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('enroll' ~ formation.id) }}">

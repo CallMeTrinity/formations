@@ -52,10 +52,21 @@
             <a href="{{ path('app_formation_show', { slug: formation.slug }) }}" class="btn btn--ghost focus-ring">Sommaire</a>
 
             {% if next %}
-                <a rel="next" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: next.slug }) }}" class="btn btn--secondary focus-ring">
-                    <span class="truncate max-w-[18ch]">{{ next.title }}</span>
-                    <span aria-hidden="true">&rarr;</span>
-                </a>
+                {% if enrollment %}
+                    {# Pour un inscrit, « Suivant » marque le chapitre courant comme lu (POST). #}
+                    <form method="post" action="{{ path('app_formation_chapter_next', { slug: formation.slug, chapterSlug: chapter.slug }) }}" class="contents">
+                        <input type="hidden" name="_token" value="{{ csrf_token('chapter_next' ~ chapter.id) }}">
+                        <button type="submit" class="btn btn--secondary focus-ring">
+                            <span class="truncate max-w-[18ch]">{{ next.title }}</span>
+                            <span aria-hidden="true">&rarr;</span>
+                        </button>
+                    </form>
+                {% else %}
+                    <a rel="next" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: next.slug }) }}" class="btn btn--secondary focus-ring">
+                        <span class="truncate max-w-[18ch]">{{ next.title }}</span>
+                        <span aria-hidden="true">&rarr;</span>
+                    </a>
+                {% endif %}
             {% else %}
                 <span></span>
             {% endif %}
