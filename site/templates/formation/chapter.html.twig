@@ -29,8 +29,17 @@
             {% endfor %}
         </div>
 
+        {# Marquer le chapitre comme terminé (réservé aux inscrits). #}
+        {% if enrollment %}
+            <div class="mt-12 pt-6 border-t border-line flex justify-center">
+                <div id="chapter-complete">
+                    {{ include('formation/_chapter_complete.html.twig', { formation: formation, chapter: chapter, completed: completed }) }}
+                </div>
+            </div>
+        {% endif %}
+
         {# Navigation précédent / sommaire / suivant. #}
-        <nav class="mt-12 pt-6 border-t border-line flex items-center justify-between gap-4" aria-label="Navigation entre chapitres">
+        <nav class="mt-8 pt-6 border-t border-line flex items-center justify-between gap-4" aria-label="Navigation entre chapitres">
             {% if previous %}
                 <a rel="prev" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: previous.slug }) }}" class="btn btn--secondary focus-ring">
                     <span aria-hidden="true">&larr;</span>

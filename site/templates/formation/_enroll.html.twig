@@ -1,0 +1,29 @@
+{# Contenu interne du contrôle « suivre / quitter » (réservé aux connectés).
+   Rendu au chargement ET par enroll.stream.html.twig, qui met à jour tous les
+   .enroll-control de la page (haut et bas) sans rechargement.
+   allChaptersCompleted : tous les chapitres sont terminés (passé par la page
+   show ; absent des streams, d'où le |default(false)). #}
+{% if enrollment %}
+    {% if enrollment.completedAt %}
+        <span class="badge badge--success">Formation terminée le {{ enrollment.completedAt|date('d/m/Y') }}</span>
+    {% else %}
+        <span class="badge badge--success">Tu suis cette formation</span>
+    {% endif %}
+
+    {% if not enrollment.completedAt and allChaptersCompleted|default(false) %}
+        <form method="post" action="{{ path('app_formation_complete', { slug: formation.slug }) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('complete_formation' ~ formation.id) }}">
+            <button type="submit" class="btn btn--primary focus-ring">Terminer la formation</button>
+        </form>
+    {% endif %}
+
+    <form method="post" action="{{ path('app_formation_unenroll', { slug: formation.slug }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('unenroll' ~ formation.id) }}">
+        <button type="submit" class="btn focus-ring">Quitter cette formation</button>
+    </form>
+{% else %}
+    <form method="post" action="{{ path('app_formation_enroll', { slug: formation.slug }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('enroll' ~ formation.id) }}">
+        <button type="submit" class="btn btn--primary focus-ring">Suivre cette formation</button>
+    </form>
+{% endif %}

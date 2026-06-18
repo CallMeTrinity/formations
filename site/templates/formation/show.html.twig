@@ -21,6 +21,11 @@
                 {% endfor %}
             </div>
 
+            {# Appel à l'action principal (haut de page). #}
+            <div class="mb-8">
+                {{ include('formation/_enroll_control.html.twig') }}
+            </div>
+
             {# Description : HTML déjà rendu par la sync (CommonMark emballe dans <p>), d'où le <div> + raw. #}
             <div class="prose-chapter text-md text-fg-secondary max-w-[60ch] mb-8">{{ formation.description|raw }}</div>
 
@@ -33,31 +38,11 @@
             {% endif %}
 
             {% if formation.objectives %}
-                <div class="max-w-[60ch] mb-8">
+                <div class="max-w-[60ch]">
                     <h2 class="text-lg font-bold tracking-tight text-fg mb-2">Ce que tu sauras faire à la fin</h2>
                     <div class="prose-chapter text-md text-fg-secondary">{{ formation.objectives|raw }}</div>
                 </div>
             {% endif %}
-
-            {# Suivre / quitter la formation (#20). #}
-            <div class="flex flex-wrap items-center gap-3">
-                {% if app.user %}
-                    {% if enrollment %}
-                        <span class="badge badge--accent">Tu suis cette formation</span>
-                        <form method="post" action="{{ path('app_formation_unenroll', { slug: formation.slug }) }}">
-                            <input type="hidden" name="_token" value="{{ csrf_token('unenroll' ~ formation.id) }}">
-                            <button type="submit" class="btn focus-ring">Quitter cette formation</button>
-                        </form>
-                    {% else %}
-                        <form method="post" action="{{ path('app_formation_enroll', { slug: formation.slug }) }}">
-                            <input type="hidden" name="_token" value="{{ csrf_token('enroll' ~ formation.id) }}">
-                            <button type="submit" class="btn btn--primary btn--lg focus-ring">Suivre cette formation</button>
-                        </form>
-                    {% endif %}
-                {% else %}
-                    <a href="{{ path('app_login') }}" class="btn btn--primary btn--lg focus-ring">Se connecter pour suivre</a>
-                {% endif %}
-            </div>
         </div>
     </section>
 
@@ -70,11 +55,20 @@
             {% else %}
                 <ol class="grid gap-3">
                     {% for chapter in formation.chapters %}
+                        {% set isDone = chapter.id in completedChapterIds %}
                         <li>
-                            <a href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: chapter.slug }) }}" class="card card--interactive flex items-center gap-4 no-underline">
-                                <span class="font-mono text-sm text-muted">{{ '%02d'|format(chapter.position) }}</span>
-                                <span class="text-md font-medium text-fg">{{ chapter.title }}</span>
-                                <span class="ml-auto text-muted" aria-hidden="true">&rarr;</span>
+                            <a href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: chapter.slug }) }}" class="card card--interactive flex items-center gap-4 no-underline{% if isDone %} border-accent{% endif %}">
+                                {% if isDone %}
+                                    <span class="text-success text-lg leading-none" aria-hidden="true" title="Terminé">&checkmark;</span>
+                                {% else %}
+                                    <span class="font-mono text-sm text-muted">{{ '%02d'|format(chapter.position) }}</span>
+                                {% endif %}
+                                <span class="text-md font-medium {{ isDone ? 'text-fg-secondary' : 'text-fg' }}">{{ chapter.title }}</span>
+                                {% if isDone %}
+                                    <span class="badge badge--success ml-auto">Terminé</span>
+                                {% else %}
+                                    <span class="ml-auto text-muted" aria-hidden="true">&rarr;</span>
+                                {% endif %}
                             </a>
                         </li>
                     {% endfor %}
@@ -88,6 +82,11 @@
                     <div class="prose-chapter text-md text-fg-secondary max-w-[60ch]">{{ formation.project|raw }}</div>
                 </div>
             {% endif %}
+
+            {# Appel à l'action répété (bas de page). #}
+            <div class="mt-10 pt-6 border-t border-line">
+                {{ include('formation/_enroll_control.html.twig') }}
+            </div>
         </div>
     </section>
 {% endblock %}
