@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalogue — Formations{% endblock %}
+
+{% block body %}
+    <section class="border-b border-line">
+        <div class="container-page py-12">
+            <p class="eyebrow mb-3">Catalogue</p>
+            <h1 class="text-3xl font-bold tracking-tight text-fg mb-3">Toutes les formations</h1>
+            <p class="text-md text-fg-secondary max-w-[60ch]">
+                Parcours les formations accessibles et filtre-les par thème et par niveau
+                pour trouver celle qui te convient.
+            </p>
+        </div>
+    </section>
+
+    <section>
+        <div class="container-page py-10 grid gap-8 lg:grid-cols-[16rem_1fr] lg:items-start">
+            {# ── Filtres ──────────────────────────────────────────────────── #}
+            {# Le formulaire reste HORS du turbo-frame : seule la zone résultats est
+               remplacée, donc les cases gardent leur focus et leur état. La nav de
+               frame est promue en visite (`advance`) pour garder une URL partageable. #}
+            <form
+                method="get"
+                data-controller="filter"
+                data-turbo-frame="catalogue-results"
+                data-turbo-action="advance"
+                class="card space-y-6 lg:sticky lg:top-6"
+            >
+                <div class="flex items-baseline justify-between gap-3">
+                    <h2 class="text-md font-semibold tracking-tight text-fg">Filtres</h2>
+                    {% if selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                        <a href="{{ path('app_formation_index') }}" class="text-xs link-accent">Réinitialiser</a>
+                    {% endif %}
+                </div>
+
+                {# ── Difficulté ───────────────────────────────────────────── #}
+                <div class="space-y-2">
+                    <span class="field-label block">Niveau</span>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        {% for difficulty in difficulties %}
+                            <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
+                                <input
+                                    type="checkbox"
+                                    name="difficulty[]"
+                                    value="{{ difficulty.value }}"
+                                    class="accent-accent"
+                                    data-action="filter#submit"
+                                    {{ difficulty in selectedDifficulties ? 'checked' }}
+                                >
+                                {{ difficulty.label }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# ── Thèmes ───────────────────────────────────────────────── #}
+                <div class="space-y-2">
+                    <span class="field-label block">Thèmes</span>
+                    {% if availableTags is not empty %}
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            {% for tag in availableTags %}
+                                <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
+                                    <input
+                                        type="checkbox"
+                                        name="tags[]"
+                                        value="{{ tag.slug }}"
+                                        class="accent-accent"
+                                        data-action="filter#submit"
+                                        {{ tag.slug in selectedTagSlugs ? 'checked' }}
+                                    >
+                                    {{ tag.label }}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-muted">Aucun thème disponible pour le moment.</p>
+                    {% endif %}
+                </div>
+
+                {# Repli sans JavaScript : le contrôleur masque ce bouton quand il se connecte. #}
+                <button type="submit" data-filter-target="submit" class="btn btn--primary focus-ring w-full">
+                    Filtrer
+                </button>
+            </form>
+
+            {# ── Résultats ────────────────────────────────────────────────── #}
+            {# `target="_top"` : les liens internes (cartes, lien « réinitialiser » du
+               message vide) naviguent la page entière. Seul le formulaire de filtres,
+               qui cible explicitement ce frame, le met à jour. #}
+            <turbo-frame id="catalogue-results" target="_top" class="block">
+                <p class="text-sm text-muted mb-4">
+                    {{ formations|length }} formation{{ formations|length > 1 ? 's' : '' }}
+                </p>
+                {% if formations is empty %}
+                    <div class="callout">
+                        Aucune formation ne correspond à ces filtres.
+                        {% if selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                            <a href="{{ path('app_formation_index') }}" class="link-accent">Réinitialiser les filtres</a>.
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        {% for formation in formations %}
+                            {{ include('recommendation/_card.html.twig', { formation: formation }) }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </turbo-frame>
+        </div>
+    </section>
+{% endblock %}

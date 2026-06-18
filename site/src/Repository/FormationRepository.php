@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Formation;
+use App\Enum\Difficulty;
 use App\Enum\Visibility;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -24,6 +25,57 @@ class FormationRepository extends ServiceEntityRepository
      */
     public function findVisible(bool $isAuthenticated, bool $isAdmin): array
     {
+        return $this->createQueryBuilder('f')
+            ->andWhere('f.visibility IN (:visibilities)')
+            ->setParameter('visibilities', $this->visibilitiesFor($isAuthenticated, $isAdmin))
+            ->orderBy('f.title', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Catalogue filtrable : formations visibles pour l'appelant, éventuellement
+     * restreintes à certains tags (slugs) et/ou certaines difficultés.
+     *
+     * Les filtres se combinent en ET (tags ET difficulté) mais sont en OU à
+     * l'intérieur d'un même critère (un des tags choisis, une des difficultés).
+     *
+     * @param list<string>     $tagSlugs     slugs de tags à filtrer ; vide = pas de filtre tag
+     * @param list<Difficulty> $difficulties difficultés à filtrer ; vide = pas de filtre niveau
+     *
+     * @return Formation[]
+     */
+    public function findCatalogue(bool $isAuthenticated, bool $isAdmin, array $tagSlugs = [], array $difficulties = []): array
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->andWhere('f.visibility IN (:visibilities)')
+            ->setParameter('visibilities', $this->visibilitiesFor($isAuthenticated, $isAdmin))
+            ->orderBy('f.title', 'ASC');
+
+        if ([] !== $tagSlugs) {
+            $qb->innerJoin('f.tags', 't')
+                ->andWhere('t.slug IN (:tagSlugs)')
+                ->setParameter('tagSlugs', $tagSlugs)
+                // Une formation portant plusieurs des tags filtrés ne doit apparaître qu'une fois.
+                ->distinct();
+        }
+
+        if ([] !== $difficulties) {
+            $qb->andWhere('f.difficulty IN (:difficulties)')
+                ->setParameter('difficulties', $difficulties);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Visibilités autorisées pour l'appelant : public pour tous, beta pour les
+     * connectés, brouillon pour les admins.
+     *
+     * @return list<Visibility>
+     */
+    public function visibilitiesFor(bool $isAuthenticated, bool $isAdmin): array
+    {
         $visibilities = [Visibility::PUBLIC];
 
         if ($isAuthenticated) {
@@ -33,12 +85,7 @@ class FormationRepository extends ServiceEntityRepository
             $visibilities[] = Visibility::DRAFT;
         }
 
-        return $this->createQueryBuilder('f')
-            ->andWhere('f.visibility IN (:visibilities)')
-            ->setParameter('visibilities', $visibilities)
-            ->orderBy('f.title', 'ASC')
-            ->getQuery()
-            ->getResult();
+        return $visibilities;
     }
 
     /**
