@@ -34,6 +34,20 @@ class FormationRepository extends ServiceEntityRepository
     }
 
     /**
+     * Toutes les formations pour l'espace admin, sans filtre de visibilité
+     * (l'admin voit aussi les brouillons), triées par titre.
+     *
+     * @return Formation[]
+     */
+    public function findAllForAdmin(): array
+    {
+        return $this->createQueryBuilder('f')
+            ->orderBy('f.title', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Catalogue filtrable : formations visibles pour l'appelant, éventuellement
      * restreintes à certains tags (slugs) et/ou certaines difficultés.
      *

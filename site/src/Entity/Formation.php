@@ -198,7 +198,7 @@ class Formation
         return $this->difficulty;
     }
 
-    public function setDifficulty(Difficulty $difficulty): static
+    public function setDifficulty(?Difficulty $difficulty): static
     {
         $this->difficulty = $difficulty;
 
