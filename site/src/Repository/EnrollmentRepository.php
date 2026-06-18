@@ -56,4 +56,41 @@ class EnrollmentRepository extends ServiceEntityRepository
             'completedCount' => (int) $row['completedCount'],
         ], $rows);
     }
+
+    /**
+     * Identifiants des formations dans lesquelles l'utilisateur est inscrit.
+     *
+     * @return list<int>
+     */
+    public function findEnrolledUserIds(User $user): array
+    {
+        $rows = $this->createQueryBuilder('e')
+            ->select('IDENTITY(e.formation) AS formationId')
+            ->where('e.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getScalarResult();
+        return array_map(static fn (array $row): int => (int) $row['formationId'], $rows);
+    }
+
+    /**
+     * Nombre d'inscriptions par formation : signal de popularité pour le scoring.
+     *
+     * @return array<int, int> formationId => nombre d'inscrits
+     */
+    public function countByFormation(): array
+    {
+        $rows = $this->createQueryBuilder('e')
+            ->select('IDENTITY(e.formation) AS formationId', 'COUNT(e.id) AS total')
+            ->groupBy('e.formation')
+            ->getQuery()
+            ->getScalarResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['formationId']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
 }

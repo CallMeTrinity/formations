@@ -35,7 +35,7 @@
                     {% if app.user %}
                         <a href="{{ path('app_dashboard') }}" class="text-fg-secondary no-underline hover:text-fg">Mes formations</a>
                     {% endif %}
-                    <a href="#" class="text-fg-secondary no-underline hover:text-fg">Recommandations</a>
+                    <a href="{{ path('app_recommendations') }}" class="text-fg-secondary no-underline hover:text-fg">Recommandations</a>
                 </nav>
                 <div class="ml-auto flex items-center gap-3">
                     {% if app.user %}

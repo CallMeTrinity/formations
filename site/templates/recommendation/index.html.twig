@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recommandations — Formations{% endblock %}
+
+{% block body %}
+    <section class="border-b border-line">
+        <div class="container-page py-12">
+            <p class="eyebrow mb-3">{{ personalized ? 'Recommandé pour toi' : 'À découvrir' }}</p>
+            <h1 class="text-3xl font-bold tracking-tight text-fg mb-3">Recommandations</h1>
+            <p class="text-md text-fg-secondary max-w-[60ch]">
+                {% if personalized %}
+                    Des formations choisies selon tes tags favoris et ton niveau, parmi celles
+                    que tu n'as pas encore terminées.
+                {% else %}
+                    Les formations publiques les plus suivies et les plus récentes.
+                    {% if app.user %}
+                        <a href="{{ path('app_preferences') }}" class="link-accent">Renseigne tes préférences</a>
+                        pour personnaliser ces suggestions.
+                    {% endif %}
+                {% endif %}
+            </p>
+        </div>
+    </section>
+
+    <section>
+        <div class="container-page py-10">
+            {% if recommendations is empty %}
+                <div class="callout">
+                    Aucune formation à recommander pour le moment.
+                    {% if app.user %}Tu as peut-être déjà tout terminé !{% endif %}
+                </div>
+            {% else %}
+                {{ include('recommendation/_list.html.twig', { recommendations: recommendations }) }}
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
