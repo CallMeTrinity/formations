@@ -39,6 +39,14 @@ class Enrollment
     private ?\DateTimeImmutable $firstCompletedAt = null;
 
     /**
+     * Nombre de fois où la formation a été menée à son terme. Incrémenté à chaque
+     * complétion (y compris après un « recommencer ») : c'est le compteur affiché
+     * sous forme d'étoiles. Jamais remis à zéro.
+     */
+    #[ORM\Column(options: ['default' => 0])]
+    private int $completionCount = 0;
+
+    /**
      * @var Collection<int, ChapterProgress>
      */
     #[ORM\OneToMany(targetEntity: ChapterProgress::class, mappedBy: 'enrollment', cascade: ['remove'], orphanRemoval: true)]
@@ -122,6 +130,25 @@ class Enrollment
     public function setFirstCompletedAt(?\DateTimeImmutable $firstCompletedAt): static
     {
         $this->firstCompletedAt = $firstCompletedAt;
+
+        return $this;
+    }
+
+    public function getCompletionCount(): int
+    {
+        return $this->completionCount;
+    }
+
+    public function setCompletionCount(int $completionCount): static
+    {
+        $this->completionCount = $completionCount;
+
+        return $this;
+    }
+
+    public function incrementCompletionCount(): static
+    {
+        ++$this->completionCount;
 
         return $this;
     }

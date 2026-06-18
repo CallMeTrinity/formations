@@ -711,6 +711,34 @@ class FormationControllerTest extends WebTestCase
         self::assertNotNull($enrollment->getFirstCompletedAt());
     }
 
+    public function testEachCompletionIncrementsCompletionCount(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        // Première complétion → 1.
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertSame(1, $enrollment->getCompletionCount());
+
+        // Recommencer, re-terminer → 2 (l'historique s'accumule).
+        $formation = $this->em->getRepository(Formation::class)->findOneBy(['slug' => 'symfony']);
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/recommencer"]')->first()->form());
+        $this->completeAllChapters($enrollment, $formation);
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertSame(2, $enrollment->getCompletionCount());
+    }
+
     public function testCompletedFormationOffersRestartAndHidesQuit(): void
     {
         $user = $this->loginUser();

@@ -187,6 +187,8 @@ final class FormationController extends AbstractController
             $now = new \DateTimeImmutable();
             $enrollment->setCompletedAt($now);
             $enrollment->setLastActivityAt($now);
+            // Compteur d'historique : chaque complétion (1re ou après reprise) ajoute une étoile.
+            $enrollment->incrementCompletionCount();
             // Trace d'historique : on retient la toute première complétion.
             if (null === $enrollment->getFirstCompletedAt()) {
                 $enrollment->setFirstCompletedAt($now);
