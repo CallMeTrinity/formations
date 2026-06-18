@@ -7,9 +7,12 @@ use App\Entity\ChapterProgress;
 use App\Entity\Enrollment;
 use App\Entity\Formation;
 use App\Entity\User;
+use App\Enum\Difficulty;
 use App\Enum\Visibility;
 use App\Repository\ChapterProgressRepository;
 use App\Repository\EnrollmentRepository;
+use App\Repository\FormationRepository;
+use App\Repository\TagRepository;
 use App\Security\Voter\FormationVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -26,6 +29,44 @@ final class FormationController extends AbstractController
         private readonly EnrollmentRepository $enrollments,
         private readonly EntityManagerInterface $em,
     ) {
+    }
+
+    /**
+     * Catalogue : la liste des formations accessibles à l'utilisateur, filtrable
+     * par tag et par difficulté. Les filtres passent par la query string (GET)
+     * pour rester partageables et fonctionner sans JavaScript.
+     */
+    #[Route('/formations', name: 'app_formation_index', methods: ['GET'])]
+    public function index(
+        Request $request,
+        FormationRepository $formations,
+        TagRepository $tags,
+    ): Response {
+        $isAuthenticated = $this->isGranted('ROLE_USER');
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+
+        // Tags sélectionnés (slugs) : on ne garde que des chaînes non vides.
+        $selectedTagSlugs = array_values(array_filter(
+            $request->query->all('tags'),
+            static fn (mixed $slug): bool => \is_string($slug) && '' !== $slug,
+        ));
+
+        // Difficultés sélectionnées : on mappe les valeurs valides sur l'enum,
+        // les valeurs inconnues sont simplement ignorées.
+        $selectedDifficulties = [];
+        foreach ($request->query->all('difficulty') as $value) {
+            if (\is_string($value) && null !== $difficulty = Difficulty::tryFrom($value)) {
+                $selectedDifficulties[] = $difficulty;
+            }
+        }
+
+        return $this->render('formation/index.html.twig', [
+            'formations' => $formations->findCatalogue($isAuthenticated, $isAdmin, $selectedTagSlugs, $selectedDifficulties),
+            'availableTags' => $tags->findForCatalogue($formations->visibilitiesFor($isAuthenticated, $isAdmin)),
+            'difficulties' => Difficulty::cases(),
+            'selectedTagSlugs' => $selectedTagSlugs,
+            'selectedDifficulties' => $selectedDifficulties,
+        ]);
     }
 
     #[Route('/formations/{slug}', name: 'app_formation_show', methods: ['GET'])]

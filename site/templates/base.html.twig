@@ -31,7 +31,8 @@
                 </a>
                 <nav class="ml-4 flex items-center gap-5 text-sm">
                     {# Liens actives au fil des milestones (catalogue, dashboard, recos). #}
-                    <a href="#" class="text-fg font-medium no-underline">Catalogue</a>
+                    {% set isCatalogue = app.request.attributes.get('_route') starts with 'app_formation' %}
+                    <a href="{{ path('app_formation_index') }}" class="no-underline {{ isCatalogue ? 'text-fg font-medium' : 'text-fg-secondary hover:text-fg' }}">Catalogue</a>
                     {% if app.user %}
                         <a href="{{ path('app_dashboard') }}" class="text-fg-secondary no-underline hover:text-fg">Mes formations</a>
                     {% endif %}

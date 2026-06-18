@@ -7,7 +7,9 @@ use App\Entity\ChapterProgress;
 use App\Entity\Enrollment;
 use App\Entity\Formation;
 use App\Entity\Section;
+use App\Entity\Tag;
 use App\Entity\User;
+use App\Enum\Difficulty;
 use App\Enum\SectionType;
 use App\Enum\Visibility;
 use Doctrine\ORM\EntityManagerInterface;
@@ -787,6 +789,163 @@ class FormationControllerTest extends WebTestCase
         $this->client->request('POST', '/formations/symfony/recommencer', ['_token' => 'invalide']);
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * Récupère un tag par son slug ou le crée (les tags survivent au nettoyage
+     * de setUp, qui ne touche qu'aux formations).
+     */
+    private function getOrCreateTag(string $slug): Tag
+    {
+        $tag = $this->em->getRepository(Tag::class)->findOneBy(['slug' => $slug]);
+        if (null === $tag) {
+            $tag = (new Tag())->setSlug($slug)->setLabel(ucfirst($slug));
+            $this->em->persist($tag);
+            $this->em->flush();
+        }
+
+        return $tag;
+    }
+
+    /**
+     * Crée une formation de catalogue avec difficulté et tags renseignés.
+     *
+     * @param list<string> $tagSlugs
+     */
+    private function createCatalogueFormation(string $slug, Visibility $visibility, ?Difficulty $difficulty = null, array $tagSlugs = []): Formation
+    {
+        $formation = (new Formation())
+            ->setSlug($slug)
+            ->setTitle('Titre '.$slug)
+            ->setDescription('<p>Description.</p>')
+            ->setVisibility($visibility);
+
+        if (null !== $difficulty) {
+            $formation->setDifficulty($difficulty);
+        }
+        foreach ($tagSlugs as $tagSlug) {
+            $formation->addTag($this->getOrCreateTag($tagSlug));
+        }
+
+        $this->em->persist($formation);
+        $this->em->flush();
+
+        return $formation;
+    }
+
+    public function testCatalogueListsPublicFormations(): void
+    {
+        $this->createCatalogueFormation('symfony', Visibility::PUBLIC);
+        $this->createCatalogueFormation('php', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony"]');
+        self::assertSelectorExists('a[href="/formations/php"]');
+    }
+
+    public function testCatalogueHidesBetaFromAnonymous(): void
+    {
+        $this->createCatalogueFormation('symfony', Visibility::PUBLIC);
+        $this->createCatalogueFormation('vim', Visibility::BETA);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony"]');
+        self::assertSelectorNotExists('a[href="/formations/vim"]');
+    }
+
+    public function testCatalogueShowsBetaForLoggedUser(): void
+    {
+        $this->loginUser();
+        $this->createCatalogueFormation('vim', Visibility::BETA);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/vim"]');
+    }
+
+    public function testCatalogueHidesDraftFromLoggedUser(): void
+    {
+        $this->loginUser();
+        $this->createCatalogueFormation('cachee', Visibility::DRAFT);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('a[href="/formations/cachee"]');
+    }
+
+    public function testCatalogueFiltersByDifficulty(): void
+    {
+        $this->createCatalogueFormation('debutant', Visibility::PUBLIC, Difficulty::BEGINNER);
+        $this->createCatalogueFormation('avance', Visibility::PUBLIC, Difficulty::ADVANCED);
+
+        $this->client->request('GET', '/formations?difficulty[]=beginner');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/debutant"]');
+        self::assertSelectorNotExists('a[href="/formations/avance"]');
+    }
+
+    public function testCatalogueFiltersByTag(): void
+    {
+        $this->createCatalogueFormation('symfony', Visibility::PUBLIC, null, ['php']);
+        $this->createCatalogueFormation('vim', Visibility::PUBLIC, null, ['outils']);
+
+        $this->client->request('GET', '/formations?tags[]=php');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony"]');
+        self::assertSelectorNotExists('a[href="/formations/vim"]');
+    }
+
+    public function testCatalogueCombinesTagAndDifficultyFilters(): void
+    {
+        // Seule celle-ci porte le tag php ET le niveau débutant.
+        $this->createCatalogueFormation('cible', Visibility::PUBLIC, Difficulty::BEGINNER, ['php']);
+        $this->createCatalogueFormation('bon-tag-mauvais-niveau', Visibility::PUBLIC, Difficulty::ADVANCED, ['php']);
+        $this->createCatalogueFormation('bon-niveau-mauvais-tag', Visibility::PUBLIC, Difficulty::BEGINNER, ['outils']);
+
+        $this->client->request('GET', '/formations?tags[]=php&difficulty[]=beginner');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/cible"]');
+        self::assertSelectorNotExists('a[href="/formations/bon-tag-mauvais-niveau"]');
+        self::assertSelectorNotExists('a[href="/formations/bon-niveau-mauvais-tag"]');
+    }
+
+    public function testCatalogueOnlyOffersTagsOfVisibleFormations(): void
+    {
+        // Le tag « secret » n'est porté que par une formation brouillon, invisible
+        // à un anonyme : il ne doit pas apparaître parmi les filtres proposés.
+        $this->createCatalogueFormation('publique', Visibility::PUBLIC, null, ['php']);
+        $this->createCatalogueFormation('cachee', Visibility::DRAFT, null, ['secret']);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="tags[]"][value="php"]');
+        self::assertSelectorNotExists('input[name="tags[]"][value="secret"]');
+    }
+
+    public function testCatalogueResultsLiveInTurboFrame(): void
+    {
+        $this->createCatalogueFormation('symfony', Visibility::PUBLIC);
+
+        $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        // Les résultats sont dans un turbo-frame, mis à jour seul lors du filtrage.
+        self::assertSelectorExists('turbo-frame#catalogue-results');
+        // La carte (lien interne) vit dans le frame...
+        self::assertSelectorExists('turbo-frame#catalogue-results a[href="/formations/symfony"]');
+        // ... mais le formulaire de filtres reste à l'extérieur et cible le frame.
+        self::assertSelectorExists('form[data-turbo-frame="catalogue-results"][data-turbo-action="advance"]');
+        self::assertSelectorNotExists('turbo-frame#catalogue-results form');
     }
 
     public function testUnenrollIsRefusedForCompletedFormation(): void
