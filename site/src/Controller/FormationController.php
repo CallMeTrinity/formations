@@ -130,6 +130,17 @@ final class FormationController extends AbstractController
             return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
         }
 
+        // Garde-fou : une formation déjà terminée reste dans l'historique. On ne
+        // la supprime pas (l'UI masque d'ailleurs « Quitter » dans ce cas).
+        if (null !== $enrollment->getFirstCompletedAt()) {
+            if (null !== $stream = $this->enrollStream($request, $formation, $enrollment)) {
+                return $stream;
+            }
+            $this->addFlash('info', 'Cette formation est terminée, elle reste dans ton historique.');
+
+            return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
+        }
+
         $this->em->remove($enrollment);
         $this->em->flush();
 
@@ -176,6 +187,10 @@ final class FormationController extends AbstractController
             $now = new \DateTimeImmutable();
             $enrollment->setCompletedAt($now);
             $enrollment->setLastActivityAt($now);
+            // Trace d'historique : on retient la toute première complétion.
+            if (null === $enrollment->getFirstCompletedAt()) {
+                $enrollment->setFirstCompletedAt($now);
+            }
             $this->em->flush();
         }
 
@@ -183,6 +198,48 @@ final class FormationController extends AbstractController
             return $stream;
         }
         $this->addFlash('success', 'Bravo, tu as terminé cette formation.');
+
+        return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
+    }
+
+    /**
+     * Recommencer une formation terminée : efface la progression et la complétion
+     * du run en cours, mais conserve firstCompletedAt (la trace d'historique).
+     */
+    #[Route('/formations/{slug}/recommencer', name: 'app_formation_restart', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function restart(
+        #[MapEntity(mapping: ['slug' => 'slug'])] Formation $formation,
+        Request $request,
+    ): Response {
+        $this->denyAccessUnlessVisible($formation);
+
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$this->isCsrfTokenValid('restart_formation'.$formation->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $enrollment = $this->enrollments->findOneByUserAndFormation($user, $formation);
+
+        // Garde-fou : on ne recommence que ce qu'on a réellement terminé.
+        if (null === $enrollment || null === $enrollment->getCompletedAt()) {
+            $this->addFlash('info', 'Il n\'y a rien à recommencer.');
+
+            return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
+        }
+
+        foreach ($enrollment->getChapterProgress()->toArray() as $progress) {
+            $this->em->remove($progress);
+        }
+        $enrollment->setCompletedAt(null);
+        $enrollment->setLastActivityAt(new \DateTimeImmutable());
+        $this->em->flush();
+
+        // Redirection franche (pas de turbo-stream) pour que le sommaire se rafraîchisse
+        // entièrement : les pastilles « Terminé » des chapitres doivent disparaître.
+        $this->addFlash('success', 'Tu peux recommencer cette formation.');
 
         return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
     }
@@ -215,15 +272,11 @@ final class FormationController extends AbstractController
         $enrollment = null;
         $completed = false;
         if ($user instanceof User) {
+            // Lecture seule : une requête GET ne doit jamais marquer de progression
+            // (sinon le prefetch Turbo au survol des liens valide des chapitres en
+            // douce). La complétion passe par « Suivant » (chapterNext) ou le bouton.
             $enrollment = $this->enrollments->findOneByUserAndFormation($user, $formation);
             if (null !== $enrollment) {
-                // Atteindre un chapitre marque le précédent comme terminé (lecture linéaire).
-                if ($index > 0
-                    && $this->markChapterCompleted($chapterProgress, $enrollment, $chapters[$index - 1], new \DateTimeImmutable())) {
-                    $enrollment->setLastActivityAt(new \DateTimeImmutable());
-                    $this->em->flush();
-                }
-
                 $completed = null !== $chapterProgress->findOneByEnrollmentAndChapter($enrollment, $chapters[$index]);
             }
         }
@@ -235,6 +288,60 @@ final class FormationController extends AbstractController
             'previous' => $chapters[$index - 1] ?? null,
             'next' => $chapters[$index + 1] ?? null,
             'completed' => $completed,
+        ]);
+    }
+
+    /**
+     * « Suivant » : marque le chapitre courant comme terminé (passer au suivant
+     * implique qu'on l'a lu), puis redirige vers le chapitre suivant. C'est le
+     * seul chemin de complétion implicite — la simple navigation ne marque rien.
+     */
+    #[Route('/formations/{slug}/{chapterSlug}/suivant', name: 'app_formation_chapter_next', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function chapterNext(
+        #[MapEntity(mapping: ['slug' => 'slug'])] Formation $formation,
+        string $chapterSlug,
+        Request $request,
+        ChapterProgressRepository $chapterProgress,
+    ): Response {
+        $this->denyAccessUnlessVisible($formation);
+
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $chapters = $formation->getChapters()->getValues();
+        $index = null;
+        foreach ($chapters as $i => $chapter) {
+            if ($chapter->getSlug() === $chapterSlug) {
+                $index = $i;
+                break;
+            }
+        }
+
+        if (null === $index) {
+            throw $this->createNotFoundException();
+        }
+
+        if (!$this->isCsrfTokenValid('chapter_next'.$chapters[$index]->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $enrollment = $this->enrollments->findOneByUserAndFormation($user, $formation);
+        if (null !== $enrollment) {
+            $now = new \DateTimeImmutable();
+            $this->markChapterCompleted($chapterProgress, $enrollment, $chapters[$index], $now);
+            $enrollment->setLastActivityAt($now);
+            $this->em->flush();
+        }
+
+        $next = $chapters[$index + 1] ?? null;
+        if (null === $next) {
+            return $this->redirectToRoute('app_formation_show', ['slug' => $formation->getSlug()]);
+        }
+
+        return $this->redirectToRoute('app_formation_chapter', [
+            'slug' => $formation->getSlug(),
+            'chapterSlug' => $next->getSlug(),
         ]);
     }
 

@@ -449,17 +449,42 @@ class FormationControllerTest extends WebTestCase
         self::assertResponseRedirects('/login');
     }
 
-    public function testVisitingNextChapterMarksPreviousCompleted(): void
+    public function testVisitingChapterMarksNothing(): void
     {
         $user = $this->loginUser();
         $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
         $this->enroll($user, $formation);
 
-        // Aller au 2e chapitre marque automatiquement le 1er comme terminé (mais pas le courant).
+        // La simple navigation (GET) ne doit marquer aucun chapitre, même au milieu.
         $this->client->request('GET', '/formations/symfony/les-bases');
         self::assertResponseIsSuccessful();
 
+        self::assertSame([], $this->completedChapterSlugs($user, 'symfony'));
+    }
+
+    public function testClickingNextMarksCurrentChapterCompleted(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        // « Suivant » depuis l'intro la marque terminée et redirige vers le chapitre suivant.
+        $crawler = $this->client->request('GET', '/formations/symfony/introduction');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/introduction/suivant"]')->form());
+
+        self::assertResponseRedirects('/formations/symfony/les-bases');
         self::assertSame(['introduction'], $this->completedChapterSlugs($user, 'symfony'));
+    }
+
+    public function testChapterNextRejectsInvalidCsrfToken(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('POST', '/formations/symfony/introduction/suivant', ['_token' => 'invalide']);
+
+        self::assertResponseStatusCodeSame(403);
     }
 
     /**
@@ -504,8 +529,9 @@ class FormationControllerTest extends WebTestCase
         $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
         $this->enroll($user, $formation);
 
-        // Visiter le 2e chapitre termine le 1er, qui doit apparaître « Terminé » au sommaire.
-        $this->client->request('GET', '/formations/symfony/les-bases');
+        // Cliquer « Suivant » depuis l'intro la termine ; elle apparaît « Terminé » au sommaire.
+        $crawler = $this->client->request('GET', '/formations/symfony/introduction');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/introduction/suivant"]')->form());
         $this->client->request('GET', '/formations/symfony');
 
         self::assertResponseIsSuccessful();
@@ -668,5 +694,93 @@ class FormationControllerTest extends WebTestCase
         $enrollment = static::getContainer()->get('doctrine.orm.entity_manager')
             ->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
         self::assertNotNull($enrollment->getCompletedAt());
+    }
+
+    public function testCompleteFormationRecordsFirstCompletedAt(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNotNull($enrollment->getFirstCompletedAt());
+    }
+
+    public function testCompletedFormationOffersRestartAndHidesQuit(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        $this->client->request('GET', '/formations/symfony');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[action="/formations/symfony/recommencer"]');
+        self::assertSelectorNotExists('form[action="/formations/symfony/quitter"]');
+    }
+
+    public function testRestartClearsProgressButKeepsHistory(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+        $this->completeAllChapters($enrollment, $formation);
+
+        // Terminer puis recommencer.
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/recommencer"]')->first()->form());
+
+        self::assertResponseRedirects('/formations/symfony');
+
+        $this->em->clear();
+        $enrollment = $this->em->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation);
+        self::assertNull($enrollment->getCompletedAt());
+        self::assertNotNull($enrollment->getFirstCompletedAt());
+        self::assertSame(0, $this->em->getRepository(ChapterProgress::class)->count(['enrollment' => $enrollment]));
+    }
+
+    public function testRestartRejectsInvalidCsrfToken(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $this->enroll($user, $formation);
+
+        $this->client->request('POST', '/formations/symfony/recommencer', ['_token' => 'invalide']);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testUnenrollIsRefusedForCompletedFormation(): void
+    {
+        $user = $this->loginUser();
+        $formation = $this->createFormationWithChapters('symfony', Visibility::PUBLIC);
+        $enrollment = $this->enroll($user, $formation);
+
+        // Jeton « quitter » valide récupéré tant que la formation n'est pas terminée.
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $token = $crawler->filter('form[action="/formations/symfony/quitter"] input[name="_token"]')->attr('value');
+
+        // On termine la formation...
+        $this->completeAllChapters($enrollment, $formation);
+        $crawler = $this->client->request('GET', '/formations/symfony');
+        $this->client->submit($crawler->filter('form[action="/formations/symfony/terminer"]')->first()->form());
+
+        // ... puis on rejoue « quitter » : l'inscription terminée reste en base.
+        $this->client->request('POST', '/formations/symfony/quitter', ['_token' => $token]);
+
+        self::assertResponseRedirects('/formations/symfony');
+        self::assertNotNull(static::getContainer()->get('doctrine.orm.entity_manager')
+            ->getRepository(Enrollment::class)->findOneByUserAndFormation($user, $formation));
     }
 }

@@ -32,6 +32,13 @@ class Enrollment
     private ?\DateTimeImmutable $completedAt = null;
 
     /**
+     * Date de la toute première complétion. Renseignée une seule fois et jamais
+     * effacée (même après un « recommencer ») : c'est la trace d'historique.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $firstCompletedAt = null;
+
+    /**
      * @var Collection<int, ChapterProgress>
      */
     #[ORM\OneToMany(targetEntity: ChapterProgress::class, mappedBy: 'enrollment', cascade: ['remove'], orphanRemoval: true)]
@@ -103,6 +110,18 @@ class Enrollment
     public function setCompletedAt(?\DateTimeImmutable $completedAt): static
     {
         $this->completedAt = $completedAt;
+
+        return $this;
+    }
+
+    public function getFirstCompletedAt(): ?\DateTimeImmutable
+    {
+        return $this->firstCompletedAt;
+    }
+
+    public function setFirstCompletedAt(?\DateTimeImmutable $firstCompletedAt): static
+    {
+        $this->firstCompletedAt = $firstCompletedAt;
 
         return $this;
     }
