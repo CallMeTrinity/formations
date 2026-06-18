@@ -39,11 +39,21 @@
                 </div>
             {% endif %}
 
-            {# Bouton Suivre : câblage réel en M4 (#20). Placeholder pour l'instant. #}
+            {# Suivre / quitter la formation (#20). #}
             <div class="flex flex-wrap items-center gap-3">
                 {% if app.user %}
-                    <button type="button" class="btn btn--primary btn--lg focus-ring" disabled>Suivre cette formation</button>
-                    <span class="text-sm text-muted">Le suivi arrive bientôt.</span>
+                    {% if enrollment %}
+                        <span class="badge badge--accent">Tu suis cette formation</span>
+                        <form method="post" action="{{ path('app_formation_unenroll', { slug: formation.slug }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('unenroll' ~ formation.id) }}">
+                            <button type="submit" class="btn focus-ring">Quitter cette formation</button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{{ path('app_formation_enroll', { slug: formation.slug }) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('enroll' ~ formation.id) }}">
+                            <button type="submit" class="btn btn--primary btn--lg focus-ring">Suivre cette formation</button>
+                        </form>
+                    {% endif %}
                 {% else %}
                     <a href="{{ path('app_login') }}" class="btn btn--primary btn--lg focus-ring">Se connecter pour suivre</a>
                 {% endif %}
