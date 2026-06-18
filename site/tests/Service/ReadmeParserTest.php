@@ -4,7 +4,7 @@ namespace App\Tests\Service;
 
 use App\Service\MarkdownRenderer;
 use App\Service\ReadmeParser;
-use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 use PHPUnit\Framework\TestCase;
 
 final class ReadmeParserTest extends TestCase
@@ -13,7 +13,7 @@ final class ReadmeParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $renderer = new MarkdownRenderer(new CommonMarkConverter(['html_input' => 'allow']));
+        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']));
         $this->parser = new ReadmeParser($renderer);
     }
 

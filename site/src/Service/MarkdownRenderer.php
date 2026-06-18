@@ -2,8 +2,8 @@
 
 namespace App\Service;
 
-use League\CommonMark\CommonMarkConverter;
 use League\CommonMark\Exception\CommonMarkException;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 
 /**
  * Rendu markdown → HTML commun au contenu pédagogique (chapitres et README) :
@@ -12,7 +12,7 @@ use League\CommonMark\Exception\CommonMarkException;
  */
 final class MarkdownRenderer
 {
-    public function __construct(private CommonMarkConverter $converter)
+    public function __construct(private GithubFlavoredMarkdownConverter $converter)
     {
     }
 
