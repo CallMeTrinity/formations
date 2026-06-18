@@ -13,7 +13,9 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-    League\CommonMark\CommonMarkConverter:
+    # GFM (et non CommonMark core) : active les tableaux, le strikethrough,
+    # les autolinks et les task lists, comme le rendu GitHub des fichiers .md.
+    League\CommonMark\GithubFlavoredMarkdownConverter:
         arguments:
             $config:
                 html_input: allow

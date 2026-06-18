@@ -6,7 +6,7 @@ use App\Dto\ParsedSection;
 use App\Enum\SectionType;
 use App\Service\ChapterParser;
 use App\Service\MarkdownRenderer;
-use League\CommonMark\CommonMarkConverter;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 use PHPUnit\Framework\TestCase;
 
 final class ChapterParserTest extends TestCase
@@ -15,7 +15,7 @@ final class ChapterParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $renderer = new MarkdownRenderer(new CommonMarkConverter(['html_input' => 'allow']));
+        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']));
         $this->parser = new ChapterParser($renderer);
     }
 
