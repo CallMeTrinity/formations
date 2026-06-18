@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes formations — Formations{% endblock %}
+
+{% block body %}
+    <section class="border-b border-line">
+        <div class="container-page py-12">
+            <p class="eyebrow mb-3">Tableau de bord</p>
+            <h1 class="text-3xl font-bold tracking-tight text-fg mb-3">Mes formations</h1>
+            <p class="text-md text-fg-secondary max-w-[60ch]">
+                Retrouve ici les formations que tu suis, ton avancement chapitre par chapitre,
+                et celles que tu as déjà terminées.
+            </p>
+            {% if hasHistory %}
+                <p class="text-sm text-muted mt-4 flex items-center gap-2">
+                    <span class="badge badge--warning shrink-0" aria-hidden="true">★</span>
+                    Une étoile par fois où tu as terminé la formation (l'historique reste même si tu recommences).
+                </p>
+            {% endif %}
+        </div>
+    </section>
+
+    <section>
+        <div class="container-page py-10 grid gap-12">
+            {% if inProgress is empty and completed is empty %}
+                <div class="callout">
+                    Tu ne suis aucune formation pour le moment.
+                    <a href="{{ path('app_home') }}" class="link-accent">Explore le catalogue</a> pour commencer.
+                </div>
+            {% endif %}
+
+            {% if inProgress is not empty %}
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight text-fg mb-5">
+                        En cours
+                        <span class="text-muted font-normal">({{ inProgress|length }})</span>
+                    </h2>
+                    <div class="grid gap-3">
+                        {% for item in inProgress %}
+                            {{ include('dashboard/_formation_card.html.twig', { item: item, done: false }) }}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if completed is not empty %}
+                <div>
+                    <h2 class="text-xl font-bold tracking-tight text-fg mb-5">
+                        Terminées
+                        <span class="text-muted font-normal">({{ completed|length }})</span>
+                    </h2>
+                    <div class="grid gap-3">
+                        {% for item in completed %}
+                            {{ include('dashboard/_formation_card.html.twig', { item: item, done: true }) }}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

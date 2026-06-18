@@ -1,0 +1,34 @@
+{# Carte d'une formation suivie : titre, avancement et barre de progression.
+   `item` = { enrollment, formation, chaptersCount, completedCount, percent }
+   `done` = la formation est terminée (run en cours bouclé : barre pleine + badge).
+
+   Les étoiles (completionCount) signalent une formation déjà accomplie au moins
+   une fois — une par complétion, y compris après un « recommencer ». #}
+{% set formation = item.formation %}
+{% set completions = item.enrollment.completionCount %}
+<a href="{{ path('app_formation_show', { slug: formation.slug }) }}"
+   class="card card--interactive no-underline block{% if done %} border-accent{% endif %}">
+    <div class="flex items-start gap-4 mb-3">
+        <div class="min-w-0">
+            <div class="flex items-center gap-2">
+                <h3 class="text-md font-semibold tracking-tight text-fg truncate min-w-0">{{ formation.title }}</h3>
+                {% if completions > 0 %}
+                    <span class="badge badge--warning shrink-0" title="Formation déjà terminée {{ completions }} fois">
+                        <span aria-hidden="true">{% if completions <= 4 %}{% for i in 1..completions %}★{% endfor %}{% else %}★ ×{{ completions }}{% endif %}</span>
+                        <span class="sr-only">terminée {{ completions }} fois</span>
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-sm text-muted mt-0.5">
+                {{ item.completedCount }} / {{ item.chaptersCount }} chapitre{{ item.chaptersCount > 1 ? 's' : '' }}
+                {%- if done and item.enrollment.completedAt %} · terminée le {{ item.enrollment.completedAt|date('d/m/Y') }}{% endif %}
+            </p>
+        </div>
+        {% if done %}
+            <span class="badge badge--success ml-auto shrink-0">Terminé</span>
+        {% else %}
+            <span class="font-mono text-sm text-fg-secondary ml-auto shrink-0">{{ item.percent }}%</span>
+        {% endif %}
+    </div>
+    <div class="progress"><div class="progress__bar" style="width:{{ item.percent }}%"></div></div>
+</a>
