@@ -261,7 +261,8 @@ class FormationAdminControllerTest extends WebTestCase
             ->setLastActivityAt(new \DateTimeImmutable());
 
         if ($completed) {
-            $enrollment->setCompletedAt(new \DateTimeImmutable());
+            $enrollment->setCompletedAt(new \DateTimeImmutable())
+            ->setFirstCompletedAt(new \DateTimeImmutable());
         }
 
         $this->em->persist($user);

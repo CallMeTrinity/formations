@@ -60,12 +60,16 @@ final class FormationController extends AbstractController
             }
         }
 
+        // Terme de recherche plein-texte (titre / description / tags).
+        $search = trim($request->query->getString('q'));
+
         return $this->render('formation/index.html.twig', [
-            'formations' => $formations->findCatalogue($isAuthenticated, $isAdmin, $selectedTagSlugs, $selectedDifficulties),
+            'formations' => $formations->findCatalogue($isAuthenticated, $isAdmin, $selectedTagSlugs, $selectedDifficulties, $search),
             'availableTags' => $tags->findForCatalogue($formations->visibilitiesFor($isAuthenticated, $isAdmin)),
             'difficulties' => Difficulty::cases(),
             'selectedTagSlugs' => $selectedTagSlugs,
             'selectedDifficulties' => $selectedDifficulties,
+            'search' => $search,
         ]);
     }
 
