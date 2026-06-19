@@ -12,6 +12,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | Formation | Slug | Statut | Lien                                   |
 | --- | --- | --- |----------------------------------------|
 | Linux & Bash | `linux-bash` | terminée | [f-linux-bash/](f-linux-bash/)         |
+| Linux avancé : administration, réseau et auto-hébergement | `linux-avance` | en cours | [f-linux-avance/](f-linux-avance/)     |
 | Le langage C | `c` | en cours | [f-c/](f-c/)                            |
 | Algorithmes et structures de données | `algorithmes-et-structures-de-donnees` | idée | —                                      |
 | TypeScript | `typescript` | idée | —                                      |
