@@ -20,7 +20,7 @@
             {# Le formulaire reste HORS du turbo-frame : seule la zone résultats est
                remplacée, donc les cases gardent leur focus et leur état. La nav de
                frame est promue en visite (`advance`) pour garder une URL partageable. #}
-            {% set hasActiveFilters = search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+            {% set hasActiveFilters = search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty or hideEnrolled %}
             <div data-controller="disclosure" class="card lg:sticky lg:top-6">
                 {# Bouton repliable : visible sur mobile uniquement. Sur lg, le panneau
                    est force visible (`lg:block`) et ce bouton est masque. #}
@@ -76,6 +76,26 @@
                         data-action="input->filter#submitDebounced search->filter#submit"
                     >
                 </div>
+
+                {# ── Mes formations ───────────────────────────────────────── #}
+                {# Réservé aux connectés : permet de ne garder que les formations
+                   pas encore rejointes. #}
+                {% if is_granted('ROLE_USER') %}
+                    <div class="space-y-2">
+                        <span class="field-label block">Mes formations</span>
+                        <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg pt-1">
+                            <input
+                                type="checkbox"
+                                name="hideEnrolled"
+                                value="1"
+                                class="accent-accent"
+                                data-action="filter#submit"
+                                {{ hideEnrolled ? 'checked' }}
+                            >
+                            Masquer celles que je suis
+                        </label>
+                    </div>
+                {% endif %}
 
                 {# ── Difficulté ───────────────────────────────────────────── #}
                 <div class="space-y-2">
@@ -139,14 +159,14 @@
                 {% if formations is empty %}
                     <div class="callout">
                         Aucune formation ne correspond à ta recherche.
-                        {% if search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                        {% if hasActiveFilters %}
                             <a href="{{ path('app_formation_index') }}" class="link-accent">Réinitialiser les filtres</a>.
                         {% endif %}
                     </div>
                 {% else %}
                     <div class="grid gap-4 sm:grid-cols-2">
                         {% for formation in formations %}
-                            {{ include('recommendation/_card.html.twig', { formation: formation }) }}
+                            {{ include('recommendation/_card.html.twig', { formation: formation, enrolled: formation.id in enrolledIds }) }}
                         {% endfor %}
                     </div>
                 {% endif %}

@@ -58,15 +58,21 @@ class FormationRepository extends ServiceEntityRepository
      * @param list<string>     $tagSlugs     slugs de tags à filtrer ; vide = pas de filtre tag
      * @param list<Difficulty> $difficulties difficultés à filtrer ; vide = pas de filtre niveau
      * @param string           $search       terme de recherche plein-texte ; vide = pas de recherche
+     * @param list<int>        $excludeIds   identifiants à exclure (ex. formations déjà suivies) ; vide = pas d'exclusion
      *
      * @return Formation[]
      */
-    public function findCatalogue(bool $isAuthenticated, bool $isAdmin, array $tagSlugs = [], array $difficulties = [], string $search = ''): array
+    public function findCatalogue(bool $isAuthenticated, bool $isAdmin, array $tagSlugs = [], array $difficulties = [], string $search = '', array $excludeIds = []): array
     {
         $qb = $this->createQueryBuilder('f')
             ->andWhere('f.visibility IN (:visibilities)')
             ->setParameter('visibilities', $this->visibilitiesFor($isAuthenticated, $isAdmin))
             ->orderBy('f.title', 'ASC');
+
+        if ([] !== $excludeIds) {
+            $qb->andWhere('f.id NOT IN (:excludeIds)')
+                ->setParameter('excludeIds', $excludeIds);
+        }
 
         if ([] !== $tagSlugs) {
             $qb->innerJoin('f.tags', 't')

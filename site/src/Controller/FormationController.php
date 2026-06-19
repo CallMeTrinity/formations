@@ -63,13 +63,28 @@ final class FormationController extends AbstractController
         // Terme de recherche plein-texte (titre / description / tags).
         $search = trim($request->query->getString('q'));
 
+        // Formations déjà suivies par l'utilisateur courant : sert à la fois au
+        // badge « Suivie » sur les cartes et au filtre « non rejointes ».
+        $enrolledIds = [];
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            $enrolledIds = $this->enrollments->findEnrolledUserIds($user);
+        }
+
+        // Filtre « masquer les formations déjà suivies » : réservé aux connectés
+        // (sans inscriptions, il n'aurait aucun effet).
+        $hideEnrolled = $isAuthenticated && $request->query->getBoolean('hideEnrolled');
+        $excludeIds = $hideEnrolled ? $enrolledIds : [];
+
         return $this->render('formation/index.html.twig', [
-            'formations' => $formations->findCatalogue($isAuthenticated, $isAdmin, $selectedTagSlugs, $selectedDifficulties, $search),
+            'formations' => $formations->findCatalogue($isAuthenticated, $isAdmin, $selectedTagSlugs, $selectedDifficulties, $search, $excludeIds),
             'availableTags' => $tags->findForCatalogue($formations->visibilitiesFor($isAuthenticated, $isAdmin)),
             'difficulties' => Difficulty::cases(),
             'selectedTagSlugs' => $selectedTagSlugs,
             'selectedDifficulties' => $selectedDifficulties,
             'search' => $search,
+            'enrolledIds' => $enrolledIds,
+            'hideEnrolled' => $hideEnrolled,
         ]);
     }
 

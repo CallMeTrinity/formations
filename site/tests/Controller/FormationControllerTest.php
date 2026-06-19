@@ -348,6 +348,47 @@ class FormationControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testCatalogueMarksEnrolledFormations(): void
+    {
+        $user = $this->loginUser();
+        $followed = $this->createFormation('symfony', Visibility::PUBLIC);
+        $this->createFormation('vim', Visibility::PUBLIC);
+        $this->enroll($user, $followed);
+
+        $crawler = $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        // La carte de la formation suivie porte le badge « Suivie », pas l'autre.
+        $followedCard = $crawler->filter('a[href="/formations/symfony"]');
+        self::assertStringContainsString('Suivie', $followedCard->text());
+        $otherCard = $crawler->filter('a[href="/formations/vim"]');
+        self::assertStringNotContainsString('Suivie', $otherCard->text());
+    }
+
+    public function testCatalogueCanHideEnrolledFormations(): void
+    {
+        $user = $this->loginUser();
+        $followed = $this->createFormation('symfony', Visibility::PUBLIC);
+        $this->createFormation('vim', Visibility::PUBLIC);
+        $this->enroll($user, $followed);
+
+        $crawler = $this->client->request('GET', '/formations?hideEnrolled=1');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('a[href="/formations/symfony"]'));
+        self::assertCount(1, $crawler->filter('a[href="/formations/vim"]'));
+    }
+
+    public function testCatalogueHideEnrolledFilterIsHiddenForAnonymous(): void
+    {
+        $this->createFormation('symfony', Visibility::PUBLIC);
+
+        $crawler = $this->client->request('GET', '/formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(0, $crawler->filter('input[name="hideEnrolled"]'));
+    }
+
     /**
      * Inscrit l'utilisateur, avec une dernière activité volontairement ancienne
      * pour pouvoir vérifier qu'une action la rafraîchit.

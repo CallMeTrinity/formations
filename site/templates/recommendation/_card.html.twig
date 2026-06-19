@@ -1,6 +1,8 @@
 {# Carte de recommandation : présente une formation à découvrir (niveau, durée,
    description courte, tags). À distinguer de la carte du dashboard, qui montre
-   la progression. `formation` = Formation. #}
+   la progression. `formation` = Formation. `enrolled` (optionnel) = l'utilisateur
+   suit déjà cette formation, on l'indique par un badge. #}
+{% set enrolled = enrolled|default(false) %}
 <a href="{{ path('app_formation_show', { slug: formation.slug }) }}"
    class="card card--interactive no-underline flex flex-col gap-3">
     <div class="flex items-center gap-2 flex-wrap text-xs text-muted">
@@ -9,6 +11,9 @@
         {% endif %}
         {% if formation.estimatedMinutes %}
             <span>{{ formation.estimatedMinutes }} min</span>
+        {% endif %}
+        {% if enrolled %}
+            <span class="badge badge--accent">Suivie</span>
         {% endif %}
         <span class="ml-auto">{{ formation.chapters|length }} chapitre{{ formation.chapters|length > 1 ? 's' : '' }}</span>
     </div>
