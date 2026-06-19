@@ -4,7 +4,25 @@ Application web (Symfony 8 + MariaDB) pour consulter les formations du dépôt, 
 et recevoir des recommandations. Le contenu pédagogique reste écrit en **markdown** dans les dossiers
 de formations du dépôt parent ; une commande de synchronisation l'importe en base.
 
-Roadmap et architecture : voir les **milestones** et **issues** GitHub (M0 → M7).
+## Documentation
+
+La documentation technique vit dans [`docs/`](docs/) :
+
+- [`docs/modele-de-donnees.md`](docs/modele-de-donnees.md) — entités, énumérations, invariant de sync.
+- [`docs/synchronisation-contenu.md`](docs/synchronisation-contenu.md) — la sync markdown → BDD.
+- [`docs/parcours-utilisateur.md`](docs/parcours-utilisateur.md) — catalogue, progression, reco, admin.
+- [`docs/securite-et-visibilite.md`](docs/securite-et-visibilite.md) — rôles, firewall, visibilité.
+
+## Fonctionnalités
+
+- **Catalogue** avec recherche plein-texte et filtres par tag / difficulté.
+- **Lecture** chapitre par chapitre, navigation précédent / suivant, liens inter-chapitres réécrits.
+- **Progression** : inscription, validation de chapitres, complétion, reprise (« recommencer »),
+  tableau de bord « Mes formations » avec pourcentage d'avancement.
+- **Recommandations** personnalisées (tags / niveau / popularité / fraîcheur) avec repli public.
+- **Comptes** : inscription, connexion, profil, préférences de recommandation.
+- **Espace admin** : métadonnées, visibilité (brouillon / beta / public), stats d'inscriptions et de
+  complétions, resynchronisation du contenu.
 
 ## Prérequis
 
@@ -22,7 +40,9 @@ composer install
 # Base de données (MariaDB via Docker)
 docker compose up -d
 symfony console doctrine:database:create --if-not-exists
-# symfony console doctrine:migrations:migrate   # quand des migrations existent
+symfony console doctrine:migrations:migrate
+# symfony console doctrine:fixtures:load        # jeu de démo (optionnel)
+# php bin/console app:formations:sync           # importer le vrai contenu markdown
 
 # Assets (Tailwind v4 via AssetMapper)
 php bin/console tailwind:build        # build unique
@@ -42,9 +62,11 @@ symfony open:local
 | Commande | Rôle |
 |----------|------|
 | `symfony console dbal:run-sql "SELECT 1"` | Vérifier la connexion DB |
+| `symfony console doctrine:migrations:migrate` | Appliquer les migrations |
+| `symfony console doctrine:fixtures:load` | Charger le jeu de démo (catalogue + comptes) |
 | `php bin/console tailwind:build --watch` | Recompiler le CSS à chaud |
 | `php bin/console debug:router` | Lister les routes |
-| `php bin/console app:formations:sync` | (M1) Synchroniser le contenu markdown → BDD |
+| `php bin/console app:formations:sync` | Synchroniser le contenu markdown → BDD |
 
 ## Design
 
@@ -84,9 +106,34 @@ vendor/bin/phpstan analyse                               # analyse statique
 php bin/phpunit                                          # tests
 ```
 
-## Structure (en construction)
+## Comptes de démo
 
-- `src/Controller/` — contrôleurs (HomeController pour l'instant)
-- `templates/` — `base.html.twig` (layout) + vues
-- `assets/styles/` — `app.css` (entrée) + `tokens.css` (design tokens)
-- `compose.yaml` — service MariaDB 11.4
+Après `doctrine:fixtures:load`, deux comptes sont disponibles (à n'utiliser qu'en local) :
+
+| Email | Mot de passe | Rôle |
+|-------|--------------|------|
+| `admin@formations.test` | `admin` | `ROLE_ADMIN` |
+| `user@formations.test`  | `user`  | `ROLE_USER` |
+
+## Structure
+
+```
+site/
+├── src/
+│   ├── Command/        app:formations:sync (CLI de synchronisation)
+│   ├── Controller/     pages publiques, dashboard, profil ; Controller/Admin pour l'espace admin
+│   ├── Dto/            objets de transfert du parsing (ParsedReadme, ParsedChapter…)
+│   ├── Entity/         contenu (Formation, Chapter, Section, Tag), comptes, progression
+│   ├── Enum/           Visibility, Difficulty, SectionType, Status
+│   ├── Form/           formulaires (admin, profil, préférences, inscription)
+│   ├── Repository/     requêtes (catalogue filtré, stats, recommandables…)
+│   ├── Security/Voter/ FormationVoter (accès par visibilité)
+│   └── Service/        sync + parsing markdown + rendu HTML + recommandation
+├── templates/          base.html.twig (layout) + vues (dont *.stream.html.twig pour Turbo)
+├── assets/styles/      app.css (entrée Tailwind v4) + tokens.css (design tokens)
+├── config/             packages (security, doctrine…), services, routes
+├── migrations/         migrations Doctrine
+├── tests/              contrôleurs, services, commande ; fixtures/content pour la sync
+├── docs/               documentation technique (voir plus haut)
+└── compose.yaml        service MariaDB 11.4
+```

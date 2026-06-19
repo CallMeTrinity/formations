@@ -31,5 +31,12 @@ formations/
 ├── README.md          ce fichier : catalogue des formations
 ├── consignes/         règles de conception à suivre pour toute formation
 ├── templates/         gabarits prêts à copier (README de formation, chapitre)
-└── <f-slug>/            une formation par sous-dossier
+├── <f-slug>/          une formation par sous-dossier (contenu markdown)
+└── site/              application Symfony qui importe et sert ce contenu
 ```
+
+Le dépôt a **deux facettes** : le **contenu** (ce README et les dossiers de formation, source de
+vérité en markdown) et le **site** ([`site/`](site/)), une application Symfony 8 + MariaDB qui importe
+ce contenu en base pour le consulter, suivre sa progression et recevoir des recommandations. La
+documentation technique du site vit dans [`site/docs/`](site/docs/) ; voir [`CLAUDE.md`](CLAUDE.md)
+pour les détails d'architecture.

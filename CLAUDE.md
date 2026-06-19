@@ -89,7 +89,7 @@ titres `##`, mappés sur l'enum `SectionType`.
 - **Comptes & préférences** — `User`, `UserPreferences` (OneToOne, avec `preferredTags`).
 - **Progression** — `Enrollment` (unique par `(user, formation)`) → `ChapterProgress`.
 
-Enums dans `src/Enum/` : `Visibility` (`DRAFT`/`BETA`/`RELEASED`, contrôle l'accès via un
+Enums dans `src/Enum/` : `Visibility` (`DRAFT`/`BETA`/`PUBLIC`, contrôle l'accès via un
 `FormationVoter` + filtrage repository), `Difficulty`, `SectionType`, `Status` (statut éditorial,
 distinct de `visibility`).
 
