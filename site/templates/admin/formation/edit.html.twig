@@ -47,28 +47,42 @@
                     {% endfor %}
                 </div>
 
-                {# Tags (cases à cocher rendues en chips). #}
-                <div class="space-y-2">
-                    <span class="field-label block">{{ form_label(form.tags) }}</span>
-                    {% if form.tags|length > 0 %}
-                        <div class="flex flex-wrap gap-2 pt-1">
-                            {% for tag in form.tags %}
-                                <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
-                                    {{ form_widget(tag, {attr: {class: 'accent-accent'}}) }}
-                                    {{ tag.vars.label }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-sm text-muted">Aucun tag disponible pour le moment.</p>
-                    {% endif %}
-                    {% for error in form.tags.vars.errors %}
-                        <p class="text-xs text-danger">{{ error.message }}</p>
-                    {% endfor %}
-                </div>
-
                 <button class="btn btn--primary focus-ring" type="submit">Enregistrer</button>
             {{ form_end(form) }}
+        </div>
+
+        {# Tags : sélection enregistrée immédiatement (turbo frame), indépendante
+           des métadonnées ci-dessus. Le champ de recherche est hors de la frame
+           pour survivre aux rechargements ; le filtrage est ré-appliqué à chaque
+           chargement de la frame. #}
+        <div class="card max-w-md space-y-4">
+            <div>
+                <h2 class="text-sm font-semibold text-fg">Tags</h2>
+                <p class="field-help">Coche un tag pour l'ajouter : c'est enregistré aussitôt. Les tags sont aussi proposés dans les préférences.</p>
+            </div>
+
+            <div
+                data-controller="tag-picker"
+                data-action="turbo:frame-load->tag-picker#filter"
+                class="space-y-3"
+            >
+                <input
+                    type="search"
+                    data-tag-picker-target="search"
+                    data-action="input->tag-picker#filter"
+                    placeholder="Rechercher un tag…"
+                    aria-label="Rechercher un tag"
+                    class="input focus-ring"
+                    autocomplete="off"
+                >
+
+                {{ include('admin/formation/_tags_frame.html.twig', {
+                    formation: formation,
+                    all_tags: all_tags,
+                    message: null,
+                    error: null,
+                }) }}
+            </div>
         </div>
     </div>
 {% endblock %}

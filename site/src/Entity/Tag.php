@@ -6,8 +6,11 @@ use App\Repository\TagRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TagRepository::class)]
+#[UniqueEntity(fields: ['slug'], message: 'Un tag équivalent existe déjà.')]
 class Tag
 {
     #[ORM\Id]
@@ -19,6 +22,8 @@ class Tag
     private ?string $slug = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Donne un libellé au tag.')]
+    #[Assert\Length(max: 255)]
     private ?string $label = null;
 
     /**

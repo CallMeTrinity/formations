@@ -18,6 +18,21 @@ class TagRepository extends ServiceEntityRepository
     }
 
     /**
+     * Tous les tags triés par libellé. Sert aux sélecteurs admin et préférences,
+     * où l'on veut la liste complète (pas seulement ceux déjà portés par une
+     * formation visible).
+     *
+     * @return Tag[]
+     */
+    public function findAllOrdered(): array
+    {
+        return $this->createQueryBuilder('t')
+            ->orderBy('t.label', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * Tags proposés comme filtres du catalogue : uniquement ceux portés par au
      * moins une formation visible pour l'appelant (pas de filtre qui ne renvoie
      * rien), triés par libellé.

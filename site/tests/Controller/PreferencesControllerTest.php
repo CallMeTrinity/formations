@@ -88,8 +88,8 @@ class PreferencesControllerTest extends WebTestCase
         $form = $crawler->selectButton('Enregistrer mes préférences')->form();
         $form['user_preferences_form[preferredDifficulty]'] = Difficulty::INTERMEDIATE->value;
         $form['user_preferences_form[weeklyGoalMinutes]'] = '120';
-        // Coche le seul thème disponible (index 0 → la Tag créée ci-dessus).
-        $form['user_preferences_form[preferredTags][0]']->tick();
+        // Sélectionne le thème créé ci-dessus (puces rendues en `preferredTags[]`).
+        $form['user_preferences_form[preferredTags]'] = [(string) $tag->getId()];
         $this->client->submit($form);
 
         self::assertResponseRedirects('/profile/preferences');

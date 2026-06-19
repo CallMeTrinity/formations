@@ -152,21 +152,16 @@ class FormationAdminControllerTest extends WebTestCase
         $this->loginUser(['ROLE_ADMIN']);
         $formation = $this->createFormation('symfony', Visibility::PUBLIC);
 
-        $tag = (new Tag())->setSlug('php')->setLabel('PHP');
-        $this->em->persist($tag);
-        $this->em->flush();
-        $tagId = $tag->getId();
-
         $crawler = $this->client->request('GET', '/admin/formations/symfony/editer');
         self::assertResponseIsSuccessful();
         $token = $crawler->filter('input[name="admin_formation[_token]"]')->attr('value');
 
+        // Les tags ne sont plus dans ce formulaire : ils ont leur propre frame.
         $this->client->request('POST', '/admin/formations/symfony/editer', [
             'admin_formation' => [
                 'status' => 'done',
                 'difficulty' => 'intermediate',
                 'estimatedMinutes' => '90',
-                'tags' => [$tagId],
                 '_token' => $token,
             ],
         ]);
@@ -177,8 +172,6 @@ class FormationAdminControllerTest extends WebTestCase
         $formation = $this->em->getRepository(Formation::class)->findOneBy(['slug' => 'symfony']);
         self::assertSame(Difficulty::INTERMEDIATE, $formation->getDifficulty());
         self::assertSame(90, $formation->getEstimatedMinutes());
-        self::assertCount(1, $formation->getTags());
-        self::assertSame('php', $formation->getTags()->first()->getSlug());
     }
 
     // ── Issue 30 : resynchronisation ──────────────────────────────────────

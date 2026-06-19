@@ -7,6 +7,7 @@ use App\Enum\Visibility;
 use App\Form\AdminFormationType;
 use App\Repository\EnrollmentRepository;
 use App\Repository\FormationRepository;
+use App\Repository\TagRepository;
 use App\Service\FormationSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -52,6 +53,7 @@ final class FormationAdminController extends AbstractController
     public function edit(
         #[MapEntity(mapping: ['slug' => 'slug'])] Formation $formation,
         Request $request,
+        TagRepository $tags,
     ): Response {
         $form = $this->createForm(AdminFormationType::class, $formation);
         $form->handleRequest($request);
@@ -66,6 +68,7 @@ final class FormationAdminController extends AbstractController
         return $this->render('admin/formation/edit.html.twig', [
             'formation' => $formation,
             'form' => $form,
+            'all_tags' => $tags->findAllOrdered(),
         ]);
     }
 

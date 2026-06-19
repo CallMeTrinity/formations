@@ -1,0 +1,45 @@
+{# Sélecteur de tags réutilisable : un champ de recherche qui filtre les puces
+   côté client, puis la liste des puces sélectionnables.
+
+   Sélection enregistrée avec le formulaire parent (pas d'auto-save). Pour la
+   version admin avec création + enregistrement immédiat, voir _tags_frame.
+
+   Paramètres :
+   - field             : la vue du champ de formulaire (multiple, non expanded)
+   - options_id        : id du conteneur de puces
+   - search_placeholder: texte du champ de recherche
+   - empty_text        : message quand aucune puce ne correspond / n'existe #}
+{% set field_name = field.vars.full_name %}
+{% set selected_values = field.vars.value %}
+{% set choices = field.vars.choices %}
+
+<div data-controller="tag-picker" class="space-y-3">
+    <input
+        type="search"
+        data-tag-picker-target="search"
+        data-action="input->tag-picker#filter"
+        placeholder="{{ search_placeholder }}"
+        aria-label="{{ search_placeholder }}"
+        class="input focus-ring"
+        autocomplete="off"
+    >
+
+    <div id="{{ options_id }}" class="flex flex-wrap gap-2">
+        {% for choice in choices %}
+            {{ include('admin/tag/_option.html.twig', {
+                field_name: field_name,
+                value: choice.value,
+                label: choice.label,
+                checked: choice.value in selected_values,
+            }) }}
+        {% endfor %}
+    </div>
+
+    <p id="{{ options_id }}-empty" data-tag-picker-target="empty" class="{{ choices|length > 0 ? 'hidden' }} text-sm text-muted">
+        {{ empty_text }}
+    </p>
+
+    {% for error in field.vars.errors %}
+        <p class="text-xs text-danger">{{ error.message }}</p>
+    {% endfor %}
+</div>
