@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Form\ChangePasswordFormType;
 use App\Form\ProfileFormType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,6 +22,7 @@ class ProfileController extends AbstractController
         UserPasswordHasherInterface $passwordHasher,
         Security $security,
     ): Response {
+        /** @var User $user */
         $user = $this->getUser();
         $profileForm = $this->createForm(ProfileFormType::class, $user);
         $profileForm->handleRequest($request);
