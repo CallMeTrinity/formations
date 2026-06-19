@@ -6,6 +6,7 @@ use App\Service\MarkdownRenderer;
 use App\Service\ReadmeParser;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 final class ReadmeParserTest extends TestCase
 {
@@ -13,7 +14,13 @@ final class ReadmeParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']));
+        $urlGenerator = $this->createStub(UrlGeneratorInterface::class);
+        $urlGenerator->method('generate')->willReturnCallback(
+            static fn (string $name, array $params = []): string => 'app_formation_show' === $name
+                ? '/formations/'.$params['slug']
+                : '/formations/'.$params['slug'].'/'.$params['chapterSlug']
+        );
+        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']), $urlGenerator);
         $this->parser = new ReadmeParser($renderer);
     }
 

@@ -8,6 +8,7 @@ use App\Service\ChapterParser;
 use App\Service\MarkdownRenderer;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 final class ChapterParserTest extends TestCase
 {
@@ -15,7 +16,13 @@ final class ChapterParserTest extends TestCase
 
     protected function setUp(): void
     {
-        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']));
+        $urlGenerator = $this->createStub(UrlGeneratorInterface::class);
+        $urlGenerator->method('generate')->willReturnCallback(
+            static fn (string $name, array $params = []): string => 'app_formation_show' === $name
+                ? '/formations/'.$params['slug']
+                : '/formations/'.$params['slug'].'/'.$params['chapterSlug']
+        );
+        $renderer = new MarkdownRenderer(new GithubFlavoredMarkdownConverter(['html_input' => 'allow']), $urlGenerator);
         $this->parser = new ChapterParser($renderer);
     }
 

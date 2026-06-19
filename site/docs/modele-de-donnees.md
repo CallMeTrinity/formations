@@ -173,7 +173,7 @@ Relations : ManyToMany avec `Formation` (#7/#29) et avec `UserPreferences` (#14)
 | `user`              | OneToOne `User`       | |
 | `preferredTags`     | ManyToMany `Tag`      | Alimente le scoring de recommandation (#23) |
 | `preferredDifficulty` | `Difficulty`        | |
-| `weeklyGoalMinutes` | int, nullable         | Optionnel |
+| `weeklyGoalMinutes` | int, nullable         | Objectif hebdomadaire (minutes). Alimente le widget « Objectif de la semaine » du tableau de bord : les minutes accomplies depuis lundi sont estimées via `estimatedMinutes / nombre de chapitres` par chapitre terminé, ou via `ChapterProgressRepository::DEFAULT_CHAPTER_MINUTES` quand la formation n'a pas d'estimation (cas du contenu synchronisé, dont le champ admin reste null). Voir `ChapterProgressRepository::sumMinutesCompletedSince`. Widget masqué tant qu'aucun objectif n'est fixé. |
 
 ## Progression (#19)
 

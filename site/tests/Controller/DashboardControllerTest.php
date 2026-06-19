@@ -7,7 +7,9 @@ use App\Entity\ChapterProgress;
 use App\Entity\Enrollment;
 use App\Entity\Formation;
 use App\Entity\User;
+use App\Entity\UserPreferences;
 use App\Enum\Visibility;
+use App\Repository\ChapterProgressRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -188,6 +190,59 @@ class DashboardControllerTest extends WebTestCase
         self::assertCount(3, mb_str_split($star->filter('[aria-hidden]')->text()));
         // Légende des étoiles affichée.
         self::assertStringContainsString('Une étoile par fois', $crawler->filter('body')->text());
+    }
+
+    public function testWeeklyGoalWidgetShowsProgress(): void
+    {
+        $user = $this->loginUser();
+        $prefs = (new UserPreferences())->setWeeklyGoalMinutes(60);
+        $user->setPreferences($prefs);
+        $this->em->persist($prefs);
+        $this->em->flush();
+
+        $formation = $this->createFormation('symfony')->setEstimatedMinutes(90); // 30 min / chapitre
+        $this->em->flush();
+        // 1 chapitre terminé cette semaine → 30 min sur un objectif de 60 → 50 %.
+        $this->enroll($user, $formation, completedCount: 1);
+
+        $crawler = $this->client->request('GET', '/mes-formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Objectif de la semaine', $crawler->filter('body')->text());
+        self::assertStringContainsString('30 / 60 min', $crawler->filter('body')->text());
+        self::assertStringContainsString('50%', $crawler->filter('body')->text());
+    }
+
+    public function testWeeklyGoalCountsFormationsWithoutEstimate(): void
+    {
+        $user = $this->loginUser();
+        $prefs = (new UserPreferences())->setWeeklyGoalMinutes(60);
+        $user->setPreferences($prefs);
+        $this->em->persist($prefs);
+        $this->em->flush();
+
+        // Formation synchronisée typique : pas d'estimatedMinutes. Un chapitre
+        // terminé doit quand même compter (durée par défaut), pas zéro.
+        $this->enroll($user, $this->createFormation('f-symfony'), completedCount: 1);
+
+        $crawler = $this->client->request('GET', '/mes-formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(
+            ChapterProgressRepository::DEFAULT_CHAPTER_MINUTES.' / 60 min',
+            $crawler->filter('body')->text()
+        );
+    }
+
+    public function testNoWeeklyGoalWidgetWithoutGoal(): void
+    {
+        $user = $this->loginUser();
+        $this->enroll($user, $this->createFormation('symfony')->setEstimatedMinutes(90), completedCount: 1);
+
+        $this->client->request('GET', '/mes-formations');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('Objectif de la semaine', (string) $this->client->getResponse()->getContent());
     }
 
     public function testCompletedAndInProgressAreSeparated(): void

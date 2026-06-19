@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\ChapterProgressRepository;
 use App\Repository\EnrollmentRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ final class DashboardController extends AbstractController
      */
     #[Route('/mes-formations', name: 'app_dashboard', methods: ['GET'])]
     #[IsGranted('ROLE_USER')]
-    public function index(EnrollmentRepository $enrollments): Response
+    public function index(EnrollmentRepository $enrollments, ChapterProgressRepository $chapterProgress): Response
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -52,10 +53,24 @@ final class DashboardController extends AbstractController
             }
         }
 
+        // Objectif hebdomadaire : minutes accomplies depuis lundi 00:00, comparées à
+        // l'objectif fixé dans les préférences. Widget masqué tant qu'aucun objectif.
+        $weeklyGoal = $user->getPreferences()?->getWeeklyGoalMinutes();
+        $weeklyProgress = null;
+        if (null !== $weeklyGoal && $weeklyGoal > 0) {
+            $doneMinutes = $chapterProgress->sumMinutesCompletedSince($user, new \DateTimeImmutable('monday this week'));
+            $weeklyProgress = [
+                'goalMinutes' => $weeklyGoal,
+                'doneMinutes' => $doneMinutes,
+                'percent' => min(100, (int) round($doneMinutes / $weeklyGoal * 100)),
+            ];
+        }
+
         return $this->render('dashboard/index.html.twig', [
             'inProgress' => $inProgress,
             'completed' => $completed,
             'hasHistory' => $hasHistory,
+            'weeklyProgress' => $weeklyProgress,
         ]);
     }
 }
