@@ -70,6 +70,7 @@ class EnrollmentRepository extends ServiceEntityRepository
             ->setParameter('user', $user)
             ->getQuery()
             ->getScalarResult();
+
         return array_map(static fn (array $row): int => (int) $row['formationId'], $rows);
     }
 
@@ -92,5 +93,33 @@ class EnrollmentRepository extends ServiceEntityRepository
         }
 
         return $counts;
+    }
+
+    /**
+     * Inscrits et complétions par formation, pour les stats admin. Le nombre de
+     * complétions compte les inscriptions actuellement terminées (completedAt non
+     * nul, donc remis à zéro après un « recommencer »).
+     *
+     * @return array<int, array{enrolled: int, completed: int}>
+     */
+    public function statsByFormation(): array
+    {
+        $rows = $this->createQueryBuilder('e')
+            ->select('IDENTITY(e.formation) AS formationId')
+            ->addSelect('COUNT(e.id) AS enrolled')
+            ->addSelect('SUM(CASE WHEN e.firstCompletedAt IS NOT NULL THEN 1 ELSE 0 END) AS completed')
+            ->groupBy('e.formation')
+            ->getQuery()
+            ->getScalarResult();
+
+        $stats = [];
+        foreach ($rows as $row) {
+            $stats[(int) $row['formationId']] = [
+                'enrolled' => (int) $row['enrolled'],
+                'completed' => (int) $row['completed'],
+            ];
+        }
+
+        return $stats;
     }
 }

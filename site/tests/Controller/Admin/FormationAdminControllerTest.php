@@ -216,4 +216,56 @@ class FormationAdminControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
     }
+
+    // ── Issue 31 : stats inscrits / complétion ────────────────────────────
+
+    public function testIndexShowsEnrollmentAndCompletionStats(): void
+    {
+        $this->loginUser(['ROLE_ADMIN']);
+        $formation = $this->createFormation('symfony', Visibility::PUBLIC);
+
+        // Deux inscrits, un seul a terminé : 2 inscrits, 50 % de complétion.
+        $this->enroll($formation, completed: true);
+        $this->enroll($formation, completed: false);
+
+        $crawler = $this->client->request('GET', '/admin');
+
+        self::assertResponseIsSuccessful();
+        $row = $crawler->filter('tbody tr')->text();
+        self::assertStringContainsString('2', $row);
+        self::assertStringContainsString('50 %', $row);
+    }
+
+    public function testIndexShowsDashForFormationWithoutEnrollments(): void
+    {
+        $this->loginUser(['ROLE_ADMIN']);
+        $this->createFormation('vide', Visibility::PUBLIC);
+
+        $crawler = $this->client->request('GET', '/admin');
+
+        self::assertResponseIsSuccessful();
+        // Aucun inscrit : pas de division par zéro, un tiret à la place du taux.
+        self::assertStringContainsString('—', $crawler->filter('tbody tr')->text());
+    }
+
+    private function enroll(Formation $formation, bool $completed): void
+    {
+        $user = (new User())
+            ->setEmail('e'.uniqid().'@test.dev')
+            ->setRoles([]);
+        $user->setPassword('x');
+
+        $enrollment = (new Enrollment())
+            ->setUser($user)
+            ->setFormation($formation)
+            ->setLastActivityAt(new \DateTimeImmutable());
+
+        if ($completed) {
+            $enrollment->setCompletedAt(new \DateTimeImmutable());
+        }
+
+        $this->em->persist($user);
+        $this->em->persist($enrollment);
+        $this->em->flush();
+    }
 }
