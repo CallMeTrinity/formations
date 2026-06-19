@@ -23,6 +23,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | Vim : coder sans souris | `vim` | terminée | [f-vim/](f-vim/)                       |
 | Assembleur x86-64 | `assembleur` | terminée | [f-assembleur/](f-assembleur/)         |
 | WebSocket : le temps réel sur le web | `websocket` | terminée | [f-websocket/](f-websocket/)           |
+| Les webhooks : recevoir et émettre des événements | `webhooks` | terminée | [f-webhooks/](f-webhooks/)             |
 
 Statuts possibles : `idée` · `en cours` · `terminée`.
 
