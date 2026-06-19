@@ -23,27 +23,16 @@
                     </div>
                 {% endif %}
 
-                {# ── Thèmes préférés (cases à cocher rendues en chips) ──────── #}
+                {# ── Thèmes préférés : recherche + puces sélectionnables ────── #}
                 <div class="space-y-2">
                     <span class="field-label block">{{ form_label(preferencesForm.preferredTags) }}</span>
-                    <p class="field-help">Sélectionne les sujets qui t'intéressent le plus.</p>
-
-                    {% if preferencesForm.preferredTags|length > 0 %}
-                        <div class="flex flex-wrap gap-2 pt-1">
-                            {% for tag in preferencesForm.preferredTags %}
-                                <label class="tag cursor-pointer has-[:checked]:border-accent has-[:checked]:text-fg">
-                                    {{ form_widget(tag, {attr: {class: 'accent-accent'}}) }}
-                                    {{ tag.vars.label }}
-                                </label>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-sm text-muted">Aucun thème disponible pour le moment.</p>
-                    {% endif %}
-
-                    {% for error in preferencesForm.preferredTags.vars.errors %}
-                        <p class="text-xs text-danger">{{ error.message }}</p>
-                    {% endfor %}
+                    <p class="field-help">Cherche et sélectionne les sujets qui t'intéressent le plus.</p>
+                    {{ include('_partials/_tag_picker.html.twig', {
+                        field: preferencesForm.preferredTags,
+                        options_id: 'preferred-tags-options',
+                        search_placeholder: 'Rechercher un thème…',
+                        empty_text: 'Aucun thème disponible pour le moment.',
+                    }) }}
                 </div>
 
                 {# ── Niveau préféré ─────────────────────────────────────────── #}
@@ -69,7 +58,11 @@
                 <button class="btn btn--primary focus-ring" type="submit">
                     Enregistrer mes préférences
                 </button>
-            {{ form_end(preferencesForm) }}
+                {# preferredTags est rendu à la main (puces) : on coupe render_rest
+                   pour éviter que form_end ne ré-affiche le <select> par défaut,
+                   et on rend le jeton CSRF explicitement. #}
+                {{ form_widget(preferencesForm._token) }}
+            {{ form_end(preferencesForm, {render_rest: false}) }}
         </div>
     </div>
 {% endblock %}

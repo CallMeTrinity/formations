@@ -1,0 +1,32 @@
+{# Une puce de tag sélectionnable.
+   `field_name` doit contenir le nom complet, crochets `[]` inclus (ex. `tags[]`
+   ou le `full_name` d'un champ multiple Symfony, qui se termine déjà par `[]`).
+   `deletable` (admin) ajoute un bouton de suppression définitive ; il vit hors
+   du <label> pour ne pas cocher la case au clic, et soumet le formulaire parent
+   vers la route de suppression (via formaction). #}
+<span
+    data-tag-picker-target="option"
+    data-label="{{ label|lower }}"
+    class="tag inline-flex items-center gap-1.5 has-[:checked]:border-accent has-[:checked]:text-fg"
+>
+    <label class="inline-flex items-center gap-1.5 cursor-pointer">
+        <input
+            type="checkbox"
+            name="{{ field_name }}"
+            value="{{ value }}"
+            {{ checked ? 'checked' }}
+            class="accent-accent"
+        >
+        {{ label }}
+    </label>
+    {% if deletable|default(false) %}
+        <button
+            type="submit"
+            formaction="{{ path('app_admin_formation_tag_delete', { slug: formation_slug, id: value }) }}"
+            formmethod="post"
+            data-turbo-confirm="Supprimer le tag « {{ label }} » ? Il sera retiré de toutes les formations et préférences."
+            class="text-muted hover:text-danger leading-none focus-ring rounded"
+            aria-label="Supprimer le tag {{ label }}"
+        >&times;</button>
+    {% endif %}
+</span>

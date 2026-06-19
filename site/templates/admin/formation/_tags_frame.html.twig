@@ -1,0 +1,74 @@
+{# Turbo frame des tags d'une formation.
+   - Sélection : chaque changement de case soumet le formulaire (auto-submit),
+     qui ré-affiche cette frame. Le bouton « Mettre à jour » est le repli no-JS.
+   - Création : formulaire distinct (sibling, pas imbriqué) qui crée le tag et
+     l'ajoute à la formation, puis ré-affiche la frame.
+   Le champ de recherche vit hors de la frame (cf. edit.html.twig) pour survivre
+   aux rechargements ; le filtrage est ré-appliqué via turbo:frame-load. #}
+{% set frame_id = 'formation-tags-' ~ formation.id %}
+{% set selected_ids = formation.tags|map(t => t.id) %}
+<turbo-frame id="{{ frame_id }}" class="block space-y-3">
+    {% if message %}
+        <p class="text-xs text-success">{{ message }}</p>
+    {% endif %}
+
+    <form
+        method="post"
+        action="{{ path('app_admin_formation_tags', { slug: formation.slug }) }}"
+        data-turbo-frame="{{ frame_id }}"
+        data-controller="auto-submit"
+        data-action="change->auto-submit#submit"
+        class="space-y-3"
+    >
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_tags' ~ formation.id) }}">
+        {# Jeton dédié à la suppression (boutons × ci-dessous, via formaction). #}
+        <input type="hidden" name="_delete_token" value="{{ csrf_token('admin_tag_delete') }}">
+
+        <div id="{{ frame_id }}-options" class="flex flex-wrap gap-2">
+            {% for tag in all_tags %}
+                {{ include('admin/tag/_option.html.twig', {
+                    field_name: 'tags[]',
+                    value: tag.id,
+                    label: tag.label,
+                    checked: tag.id in selected_ids,
+                    deletable: true,
+                    formation_slug: formation.slug,
+                }) }}
+            {% endfor %}
+        </div>
+
+        <p data-tag-picker-target="empty" class="{{ all_tags|length > 0 ? 'hidden' }} text-sm text-muted">
+            Aucun tag pour le moment. Crée-en un ci-dessous.
+        </p>
+
+        {# Repli sans JavaScript : masqué par le contrôleur auto-submit. #}
+        <button type="submit" data-auto-submit-target="submit" class="btn btn--secondary btn--sm focus-ring">
+            Mettre à jour les tags
+        </button>
+    </form>
+
+    {# Création d'un tag (formulaire distinct, ajouté à la formation). #}
+    <form
+        method="post"
+        action="{{ path('app_admin_formation_tag_create', { slug: formation.slug }) }}"
+        data-turbo-frame="{{ frame_id }}"
+        class="space-y-2 pt-3 border-t border-line"
+    >
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_tag_create') }}">
+        <span class="field-label block">Nouveau tag</span>
+        <div class="flex gap-2">
+            <input
+                type="text"
+                name="label"
+                placeholder="Nom du nouveau tag"
+                aria-label="Nom du nouveau tag"
+                class="input focus-ring"
+                autocomplete="off"
+            >
+            <button type="submit" class="btn btn--secondary focus-ring shrink-0">Créer</button>
+        </div>
+        {% if error %}
+            <p class="text-xs text-danger">{{ error }}</p>
+        {% endif %}
+    </form>
+</turbo-frame>

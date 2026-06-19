@@ -23,7 +23,8 @@ class UserPreferencesFormType extends AbstractType
                 'class' => Tag::class,
                 'choice_label' => 'label',
                 'multiple' => true,
-                'expanded' => true, // rendu en cases à cocher
+                // Puces rendues à la main dans le template (cf. _tag_picker).
+                'expanded' => false,
                 // Indispensable avec multiple : force l'appel de add/removePreferredTag()
                 // sur l'entité plutôt qu'un remplacement direct de la collection.
                 'by_reference' => false,
