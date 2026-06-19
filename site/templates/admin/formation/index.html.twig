@@ -28,7 +28,8 @@
                     Aucune formation en base. Lance une resynchronisation pour importer le contenu.
                 </div>
             {% else %}
-                <div class="card overflow-x-auto p-0">
+                {# ── Bureau (md+) : tableau dense ─────────────────────────── #}
+                <div class="card overflow-x-auto p-0 hidden md:block">
                     <table class="w-full text-sm">
                         <thead>
                         <tr class="border-b border-line text-left text-muted">
@@ -97,6 +98,79 @@
                         {% endfor %}
                         </tbody>
                     </table>
+                </div>
+
+                {# ── Mobile (< md) : une carte par formation ──────────────── #}
+                {# Les turbo-frames de visibilite portent un id distinct (`-m-`)
+                   de ceux du tableau : la reponse (page complete) contient les
+                   deux frames, Turbo remplace le bon par son id unique. #}
+                <div class="grid gap-3 md:hidden">
+                    {% for formation in formations %}
+                        {% set s = stats[formation.id] ?? { enrolled: 0, completed: 0 } %}
+                        <div class="card space-y-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <a href="{{ path('app_formation_show', { slug: formation.slug }) }}"
+                                       class="font-medium text-fg link-accent no-underline break-words">{{ formation.title }}</a>
+                                    <div class="font-mono text-xs text-muted break-all">{{ formation.slug }}</div>
+                                </div>
+                                <span class="badge shrink-0 {{ formation.status.value == 'done' ? 'badge--success' : 'badge--neutral' }}">{{ formation.status.label }}</span>
+                            </div>
+
+                            <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                <div>
+                                    <dt class="text-xs text-muted">Difficulté</dt>
+                                    <dd class="text-fg-secondary">{{ formation.difficulty ? formation.difficulty.label : '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-muted">Durée</dt>
+                                    <dd class="text-fg-secondary">{{ formation.estimatedMinutes ? formation.estimatedMinutes ~ ' min' : '—' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-muted">Chapitres</dt>
+                                    <dd class="text-fg-secondary">{{ formation.chapters|length }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-muted">Inscrits</dt>
+                                    <dd class="text-fg-secondary">{{ s.enrolled }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-xs text-muted">Complétion</dt>
+                                    <dd class="text-fg-secondary">{{ s.enrolled > 0 ? (s.completed / s.enrolled * 100)|round ~ ' %' : '—' }}</dd>
+                                </div>
+                            </dl>
+
+                            <turbo-frame id="visibility-m-{{ formation.id }}">
+                                <form
+                                    method="post"
+                                    data-turbo-frame="visibility-m-{{ formation.id }}"
+                                    action="{{ path('app_admin_formation_visibility', { slug: formation.slug }) }}"
+                                    data-controller="auto-submit"
+                                    class="space-y-1.5"
+                                >
+                                    <span class="field-label block">Visibilité</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="hidden" name="_token"
+                                               value="{{ csrf_token('admin_visibility' ~ formation.id) }}">
+                                        <select name="visibility" class="select"
+                                                data-action="change->auto-submit#submit"
+                                                aria-label="Visibilité de {{ formation.title }}">
+                                            {% for visibility in visibilities %}
+                                                <option
+                                                    value="{{ visibility.value }}" {{ visibility == formation.visibility ? 'selected' }}>{{ visibility.label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" data-auto-submit-target="submit"
+                                                class="btn btn--secondary btn--sm focus-ring shrink-0">OK
+                                        </button>
+                                    </div>
+                                </form>
+                            </turbo-frame>
+
+                            <a href="{{ path('app_admin_formation_edit', { slug: formation.slug }) }}"
+                               class="btn btn--secondary btn--sm focus-ring w-full">Éditer</a>
+                        </div>
+                    {% endfor %}
                 </div>
             {% endif %}
         </div>

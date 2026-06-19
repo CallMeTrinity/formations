@@ -10,7 +10,7 @@
    class="card card--interactive no-underline block{% if done %} border-accent{% endif %}">
     <div class="flex items-start gap-4 mb-3">
         <div class="min-w-0">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 min-w-0">
                 <h3 class="text-md font-semibold tracking-tight text-fg truncate min-w-0">{{ formation.title }}</h3>
                 {% if completions > 0 %}
                     <span class="badge badge--warning shrink-0" title="Formation déjà terminée {{ completions }} fois">

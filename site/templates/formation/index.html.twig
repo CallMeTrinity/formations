@@ -20,19 +20,47 @@
             {# Le formulaire reste HORS du turbo-frame : seule la zone résultats est
                remplacée, donc les cases gardent leur focus et leur état. La nav de
                frame est promue en visite (`advance`) pour garder une URL partageable. #}
-            <form
-                method="get"
-                data-controller="filter"
-                data-turbo-frame="catalogue-results"
-                data-turbo-action="advance"
-                class="card space-y-6 lg:sticky lg:top-6"
-            >
-                <div class="flex items-baseline justify-between gap-3">
+            {% set hasActiveFilters = search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+            <div data-controller="disclosure" class="card lg:sticky lg:top-6">
+                {# Bouton repliable : visible sur mobile uniquement. Sur lg, le panneau
+                   est force visible (`lg:block`) et ce bouton est masque. #}
+                <button
+                    type="button"
+                    data-action="disclosure#toggle"
+                    data-disclosure-target="button"
+                    aria-expanded="false"
+                    aria-controls="catalogue-filters"
+                    class="group lg:hidden w-full flex items-center justify-between gap-3 text-md font-semibold tracking-tight text-fg"
+                >
+                    <span class="flex items-center gap-2">
+                        Filtres
+                        {% if hasActiveFilters %}<span class="badge badge--accent">actifs</span>{% endif %}
+                    </span>
+                    <svg class="size-4 text-muted transition-transform group-aria-expanded:rotate-180" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"></path>
+                    </svg>
+                </button>
+
+                <form
+                    id="catalogue-filters"
+                    method="get"
+                    data-controller="filter"
+                    data-disclosure-target="panel"
+                    data-turbo-frame="catalogue-results"
+                    data-turbo-action="advance"
+                    class="hidden lg:block space-y-6 mt-4 lg:mt-0"
+                >
+                {# En-tete bureau (lg+) : sur mobile, le bouton ci-dessus tient ce role. #}
+                <div class="hidden lg:flex items-baseline justify-between gap-3">
                     <h2 class="text-md font-semibold tracking-tight text-fg">Filtres</h2>
-                    {% if search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                    {% if hasActiveFilters %}
                         <a href="{{ path('app_formation_index') }}" class="text-xs link-accent">Réinitialiser</a>
                     {% endif %}
                 </div>
+
+                {% if hasActiveFilters %}
+                    <a href="{{ path('app_formation_index') }}" class="lg:hidden inline-block text-xs link-accent">Réinitialiser les filtres</a>
+                {% endif %}
 
                 {# ── Recherche ────────────────────────────────────────────── #}
                 <div class="space-y-2">
@@ -97,7 +125,8 @@
                 <button type="submit" data-filter-target="submit" class="btn btn--primary focus-ring w-full">
                     Filtrer
                 </button>
-            </form>
+                </form>
+            </div>
 
             {# ── Résultats ────────────────────────────────────────────────── #}
             {# `target="_top"` : les liens internes (cartes, lien « réinitialiser » du
