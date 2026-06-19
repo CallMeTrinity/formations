@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Formation;
 use App\Enum\Visibility;
 use App\Form\AdminFormationType;
+use App\Repository\EnrollmentRepository;
 use App\Repository\FormationRepository;
 use App\Service\FormationSyncService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,10 +35,11 @@ final class FormationAdminController extends AbstractController
      * leur statut éditorial et leur visibilité.
      */
     #[Route('', name: 'app_admin_formations', methods: ['GET'])]
-    public function index(FormationRepository $formations): Response
+    public function index(FormationRepository $formations, EnrollmentRepository $enrollments): Response
     {
         return $this->render('admin/formation/index.html.twig', [
             'formations' => $formations->findAllForAdmin(),
+            'stats' => $enrollments->statsByFormation(),
             'visibilities' => Visibility::cases(),
         ]);
     }

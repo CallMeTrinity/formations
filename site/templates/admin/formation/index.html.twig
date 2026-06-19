@@ -38,11 +38,14 @@
                             <th class="font-medium px-4 py-3">Difficulté</th>
                             <th class="font-medium px-4 py-3">Chapitres</th>
                             <th class="font-medium px-4 py-3">Durée</th>
+                            <th class="font-medium px-4 py-3 text-right">Inscrits</th>
+                            <th class="font-medium px-4 py-3 text-right">Complétion</th>
                             <th class="font-medium px-4 py-3 text-right">Actions</th>
                         </tr>
                         </thead>
                         <tbody>
                         {% for formation in formations %}
+                            {% set s = stats[formation.id] ?? { enrolled: 0, completed: 0 } %}
                             <tr class="border-b border-line last:border-0">
                                 <td class="px-4 py-3">
                                     <a href="{{ path('app_formation_show', { slug: formation.slug }) }}"
@@ -82,6 +85,10 @@
                                 <td class="px-4 py-3 text-fg-secondary">{{ formation.difficulty ? formation.difficulty.label : '—' }}</td>
                                 <td class="px-4 py-3 text-fg-secondary">{{ formation.chapters|length }}</td>
                                 <td class="px-4 py-3 text-fg-secondary">{{ formation.estimatedMinutes ? formation.estimatedMinutes ~ ' min' : '—' }}</td>
+                                <td class="px-4 py-3 text-right text-fg-secondary">{{ s.enrolled }}</td>
+                                <td class="px-4 py-3 text-right text-fg-secondary">
+                                    {{ s.enrolled > 0 ? (s.completed / s.enrolled * 100)|round ~ ' %' : '—' }}
+                                </td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ path('app_admin_formation_edit', { slug: formation.slug }) }}"
                                        class="btn btn--ghost btn--sm focus-ring">Éditer</a>
