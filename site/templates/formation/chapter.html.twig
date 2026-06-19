@@ -39,36 +39,38 @@
         {% endif %}
 
         {# Navigation précédent / sommaire / suivant. #}
-        <nav class="mt-8 pt-6 border-t border-line flex items-center justify-between gap-4" aria-label="Navigation entre chapitres">
+        {# Sur mobile : grille 2 colonnes (precedent / suivant) avec « Sommaire »
+           sur toute la largeur en dessous. Sur sm+ : une seule ligne espacee. #}
+        <nav class="mt-8 pt-6 border-t border-line grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between" aria-label="Navigation entre chapitres">
             {% if previous %}
-                <a rel="prev" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: previous.slug }) }}" class="btn btn--secondary focus-ring">
-                    <span aria-hidden="true">&larr;</span>
-                    <span class="truncate max-w-[18ch]">{{ previous.title }}</span>
+                <a rel="prev" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: previous.slug }) }}" class="btn btn--secondary focus-ring order-1 w-full sm:w-auto min-w-0">
+                    <span aria-hidden="true" class="shrink-0">&larr;</span>
+                    <span class="truncate min-w-0 sm:max-w-[18ch]">{{ previous.title }}</span>
                 </a>
             {% else %}
-                <span></span>
+                <span class="order-1"></span>
             {% endif %}
 
-            <a href="{{ path('app_formation_show', { slug: formation.slug }) }}" class="btn btn--ghost focus-ring">Sommaire</a>
+            <a href="{{ path('app_formation_show', { slug: formation.slug }) }}" class="btn btn--ghost focus-ring order-3 col-span-2 sm:order-2 sm:col-span-1">Sommaire</a>
 
             {% if next %}
                 {% if enrollment %}
                     {# Pour un inscrit, « Suivant » marque le chapitre courant comme lu (POST). #}
                     <form method="post" action="{{ path('app_formation_chapter_next', { slug: formation.slug, chapterSlug: chapter.slug }) }}" class="contents">
                         <input type="hidden" name="_token" value="{{ csrf_token('chapter_next' ~ chapter.id) }}">
-                        <button type="submit" class="btn btn--secondary focus-ring">
-                            <span class="truncate max-w-[18ch]">{{ next.title }}</span>
-                            <span aria-hidden="true">&rarr;</span>
+                        <button type="submit" class="btn btn--secondary focus-ring order-2 sm:order-3 w-full sm:w-auto min-w-0">
+                            <span class="truncate min-w-0 sm:max-w-[18ch]">{{ next.title }}</span>
+                            <span aria-hidden="true" class="shrink-0">&rarr;</span>
                         </button>
                     </form>
                 {% else %}
-                    <a rel="next" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: next.slug }) }}" class="btn btn--secondary focus-ring">
-                        <span class="truncate max-w-[18ch]">{{ next.title }}</span>
-                        <span aria-hidden="true">&rarr;</span>
+                    <a rel="next" href="{{ path('app_formation_chapter', { slug: formation.slug, chapterSlug: next.slug }) }}" class="btn btn--secondary focus-ring order-2 sm:order-3 w-full sm:w-auto min-w-0">
+                        <span class="truncate min-w-0 sm:max-w-[18ch]">{{ next.title }}</span>
+                        <span aria-hidden="true" class="shrink-0">&rarr;</span>
                     </a>
                 {% endif %}
             {% else %}
-                <span></span>
+                <span class="order-2 sm:order-3"></span>
             {% endif %}
         </nav>
     </article>

@@ -56,6 +56,24 @@
     --radius-full: var(--radius-full);
 }
 
+/*
+ * Typographie fluide (responsive). Les tokens synchronises definissent les
+ * paliers hauts en valeurs fixes, trop grosses sur mobile (un titre `text-4xl`
+ * a 64px deborde a 320px). On rend les quatre paliers d'affichage fluides via
+ * clamp() : ils retrecissent jusqu'a une borne basse lisible sur petit ecran
+ * et retrouvent la valeur du design system des qu'il y a la place.
+ *
+ * Surcharge volontaire des tokens (declaree APRES l'import) : touche a la fois
+ * les utilitaires Tailwind (text-xl…text-4xl) et les usages directs
+ * `var(--text-*)` de .prose-chapter, sans editer le fichier synchronise.
+ */
+:root {
+    --text-xl:  clamp(1.375rem, 1.10rem + 1.4vw, 1.75rem);  /* 22 → 28 */
+    --text-2xl: clamp(1.625rem, 1.20rem + 2.1vw, 2.25rem);  /* 26 → 36 */
+    --text-3xl: clamp(1.875rem, 1.20rem + 3.4vw, 3rem);     /* 30 → 48 */
+    --text-4xl: clamp(2.25rem,  1.30rem + 4.7vw, 4rem);     /* 36 → 64 */
+}
+
 @layer base {
     body {
         background-color: var(--bg);
@@ -85,7 +103,15 @@
         width: 100%;
         max-width: var(--container);
         margin-inline: auto;
-        padding-inline: var(--space-5);
+        /* Gouttiere reduite sur mobile (16px) pour gagner de la largeur utile
+           jusqu'a 320px, puis 24px des qu'on a la place. */
+        padding-inline: var(--space-4);
+    }
+
+    @media (min-width: 640px) {
+        .container-page {
+            padding-inline: var(--space-5);
+        }
     }
 
     .container-narrow {
@@ -371,6 +397,8 @@
 .prose-chapter {
     color: var(--text-secondary);
     line-height: var(--leading-relaxed);
+    /* Evite qu'un mot ou une URL trop longue ne deborde a 320px. */
+    overflow-wrap: break-word;
 }
 
 .prose-chapter :where(h2) {
@@ -450,7 +478,13 @@
 }
 
 .prose-chapter :where(table) {
-    width: 100%;
+    /* `block` + scroll horizontal : un tableau large reste consultable a 320px
+       au lieu de pousser la mise en page. Retrouve sa pleine largeur des qu'il
+       tient dans le conteneur. */
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
     margin: var(--space-4) 0;
     border-collapse: collapse;
     font-size: var(--text-sm);

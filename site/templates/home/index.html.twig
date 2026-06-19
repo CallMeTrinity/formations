@@ -4,7 +4,7 @@
 
 {% block body %}
 <section class="border-b border-line">
-    <div class="container-page py-20 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+    <div class="container-page py-12 sm:py-20 grid gap-10 lg:gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
             <p class="eyebrow mb-4">Formations pour développeurs · pratique d'abord</p>
             <h1 class="text-4xl font-bold tracking-tight leading-tight text-fg mb-5 max-w-[16ch]">
@@ -16,9 +16,13 @@
             </p>
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ path('app_formation_index') }}" class="btn btn--primary btn--lg focus-ring">Explorer le catalogue</a>
-                <a href="#" class="btn btn--secondary btn--lg focus-ring">Créer un compte</a>
+                {% if not app.user %}
+                    <a href="{{ path('app_register') }}" class="btn btn--secondary btn--lg focus-ring">Créer un compte</a>
+                {% else %}
+                    <a href="{{ path('app_dashboard') }}" class="btn btn--secondary btn--lg focus-ring">Mes formations</a>
+                {% endif %}
             </div>
-            <p class="text-sm text-muted mt-5">Gratuit · 4 formations · suivi de progression</p>
+            <p class="text-sm text-muted mt-5">Les formations publiques se lisent sans compte. Un compte gratuit débloque la suite.</p>
         </div>
 
         <div class="bg-surface-inset border border-line rounded-md overflow-hidden shadow-[var(--shadow-md)]">
@@ -62,6 +66,43 @@
     </div>
 </section>
 {% endif %}
+
+<section class="border-b border-line">
+    <div class="container-page py-16">
+        <p class="eyebrow mb-3">Avec ou sans compte</p>
+        <h2 class="text-2xl font-bold tracking-tight text-fg mb-2">Lis librement, connecte-toi pour la suite</h2>
+        <p class="text-md text-fg-secondary max-w-[60ch] mb-8">
+            Pas de barrière pour commencer. Le compte sert à débloquer le contenu en préparation et à
+            garder une trace de ton avancement.
+        </p>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div class="card">
+                <span class="badge badge--neutral mb-4">SANS COMPTE</span>
+                <h3 class="text-lg font-semibold tracking-tight text-fg mb-3">Consulter le catalogue public</h3>
+                <ul class="flex flex-col gap-2 text-sm text-fg-secondary">
+                    <li class="flex gap-2"><span class="text-accent">→</span> Lire les formations publiques, chapitre par chapitre.</li>
+                    <li class="flex gap-2"><span class="text-accent">→</span> Filtrer et chercher dans le catalogue.</li>
+                    <li class="flex gap-2"><span class="text-accent">→</span> Aucune inscription, rien à installer.</li>
+                </ul>
+            </div>
+            <div class="card border-line-strong">
+                <span class="badge badge--accent mb-4">COMPTE GRATUIT</span>
+                <h3 class="text-lg font-semibold tracking-tight text-fg mb-3">Débloquer et suivre</h3>
+                <ul class="flex flex-col gap-2 text-sm text-fg-secondary">
+                    <li class="flex gap-2"><span class="text-accent">→</span> Accéder aux formations en <strong class="text-fg font-medium">beta</strong>, encore en rodage.</li>
+                    <li class="flex gap-2"><span class="text-accent">→</span> Sauvegarder ta progression d'un appareil à l'autre.</li>
+                    <li class="flex gap-2"><span class="text-accent">→</span> Recevoir des recommandations selon tes tags et ton niveau.</li>
+                </ul>
+                {% if not app.user %}
+                    <div class="mt-5 flex flex-wrap items-center gap-3">
+                        <a href="{{ path('app_register') }}" class="btn btn--primary focus-ring">Créer un compte</a>
+                        <a href="{{ path('app_login') }}" class="link-accent text-sm">J'ai déjà un compte</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
 
 <section>
     <div class="container-page py-16">
