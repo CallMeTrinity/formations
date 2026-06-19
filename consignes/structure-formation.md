@@ -32,7 +32,7 @@ jalons apparaissent chapitre par chapitre.
 
 ## Découpage en chapitres
 
-- Viser **8 à 14 chapitres**. En dessous, la progression est trop abrupte ; au-dessus, la formation
+- Viser **8 à 16 chapitres**. En dessous, la progression est trop abrupte ; au-dessus, la formation
   devient difficile à tenir.
 - Un chapitre = **une grande notion** cohérente. Si un chapitre devient trop long ou couvre deux
   idées indépendantes, le scinder.
