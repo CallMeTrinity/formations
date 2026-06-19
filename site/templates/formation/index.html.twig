@@ -29,9 +29,24 @@
             >
                 <div class="flex items-baseline justify-between gap-3">
                     <h2 class="text-md font-semibold tracking-tight text-fg">Filtres</h2>
-                    {% if selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                    {% if search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
                         <a href="{{ path('app_formation_index') }}" class="text-xs link-accent">Réinitialiser</a>
                     {% endif %}
+                </div>
+
+                {# ── Recherche ────────────────────────────────────────────── #}
+                <div class="space-y-2">
+                    <label for="catalogue-search" class="field-label block">Recherche</label>
+                    <input
+                        type="search"
+                        id="catalogue-search"
+                        name="q"
+                        value="{{ search }}"
+                        placeholder="Titre, description, thème…"
+                        autocomplete="off"
+                        class="input w-full"
+                        data-action="input->filter#submitDebounced search->filter#submit"
+                    >
                 </div>
 
                 {# ── Difficulté ───────────────────────────────────────────── #}
@@ -94,8 +109,8 @@
                 </p>
                 {% if formations is empty %}
                     <div class="callout">
-                        Aucune formation ne correspond à ces filtres.
-                        {% if selectedTagSlugs is not empty or selectedDifficulties is not empty %}
+                        Aucune formation ne correspond à ta recherche.
+                        {% if search is not empty or selectedTagSlugs is not empty or selectedDifficulties is not empty %}
                             <a href="{{ path('app_formation_index') }}" class="link-accent">Réinitialiser les filtres</a>.
                         {% endif %}
                     </div>

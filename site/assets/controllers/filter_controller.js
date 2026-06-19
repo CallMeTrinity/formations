@@ -17,4 +17,15 @@ export default class extends Controller {
     submit() {
         this.element.requestSubmit();
     }
+
+    // Soumission différée pour le champ de recherche : on attend une pause de
+    // frappe pour éviter une requête à chaque caractère.
+    submitDebounced() {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => this.submit(), 300);
+    }
+
+    disconnect() {
+        clearTimeout(this.debounceTimer);
+    }
 }

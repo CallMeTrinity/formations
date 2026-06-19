@@ -918,6 +918,45 @@ class FormationControllerTest extends WebTestCase
         self::assertSelectorNotExists('a[href="/formations/bon-niveau-mauvais-tag"]');
     }
 
+    public function testCatalogueSearchMatchesTitle(): void
+    {
+        $this->createCatalogueFormation('symfony-debutant', Visibility::PUBLIC);
+        $this->createCatalogueFormation('vim', Visibility::PUBLIC);
+
+        // « Titre symfony-debutant » correspond, « Titre vim » non.
+        $this->client->request('GET', '/formations?q=symfony');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony-debutant"]');
+        self::assertSelectorNotExists('a[href="/formations/vim"]');
+    }
+
+    public function testCatalogueSearchMatchesTag(): void
+    {
+        // Le terme n'est ni dans le titre ni la description, seulement dans un tag.
+        $this->createCatalogueFormation('symfony', Visibility::PUBLIC, null, ['php']);
+        $this->createCatalogueFormation('vim', Visibility::PUBLIC, null, ['outils']);
+
+        $this->client->request('GET', '/formations?q=php');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony"]');
+        self::assertSelectorNotExists('a[href="/formations/vim"]');
+    }
+
+    public function testCatalogueSearchCombinesWithDifficulty(): void
+    {
+        $this->createCatalogueFormation('symfony-debutant', Visibility::PUBLIC, Difficulty::BEGINNER);
+        $this->createCatalogueFormation('symfony-avance', Visibility::PUBLIC, Difficulty::ADVANCED);
+
+        // Recherche ET difficulté se combinent en ET.
+        $this->client->request('GET', '/formations?q=symfony&difficulty[]=beginner');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('a[href="/formations/symfony-debutant"]');
+        self::assertSelectorNotExists('a[href="/formations/symfony-avance"]');
+    }
+
     public function testCatalogueOnlyOffersTagsOfVisibleFormations(): void
     {
         // Le tag « secret » n'est porté que par une formation brouillon, invisible
