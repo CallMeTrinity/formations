@@ -164,7 +164,7 @@
                         {% endif %}
                     </div>
                 {% else %}
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <div data-controller="reveal" class="grid gap-4 sm:grid-cols-2">
                         {% for formation in formations %}
                             {{ include('recommendation/_card.html.twig', { formation: formation, enrolled: formation.id in enrolledIds }) }}
                         {% endfor %}

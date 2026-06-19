@@ -18,7 +18,7 @@
 
         {# Contenu pédagogique : HTML déjà rendu par la sync (CommonMark, html_input: allow),
            d'où le |raw. Les blocs <details> des corrigés et quiz sont conservés tels quels. #}
-        <div class="prose-chapter">
+        <div data-controller="reveal" data-reveal-stagger-value="0.12" class="prose-chapter">
             {% for section in chapter.sections %}
                 <section>
                     <h2>{{ section.title }}</h2>

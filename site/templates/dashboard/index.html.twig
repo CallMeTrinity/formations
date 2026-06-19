@@ -32,7 +32,7 @@
                         {{ weeklyProgress.doneMinutes }} / {{ weeklyProgress.goalMinutes }} min cette semaine
                         {%- if weeklyProgress.doneMinutes >= weeklyProgress.goalMinutes %} · objectif atteint{% endif %}
                     </p>
-                    <div class="progress"><div class="progress__bar" style="width:{{ weeklyProgress.percent }}%"></div></div>
+                    <div data-controller="progress" class="progress"><div class="progress__bar" style="width:{{ weeklyProgress.percent }}%"></div></div>
                 </div>
             </div>
         </section>
@@ -53,7 +53,7 @@
                         En cours
                         <span class="text-muted font-normal">({{ inProgress|length }})</span>
                     </h2>
-                    <div class="grid grid-cols-1 gap-3">
+                    <div data-controller="reveal" class="grid grid-cols-1 gap-3">
                         {% for item in inProgress %}
                             {{ include('dashboard/_formation_card.html.twig', { item: item, done: false }) }}
                         {% endfor %}
@@ -67,7 +67,7 @@
                         Terminées
                         <span class="text-muted font-normal">({{ completed|length }})</span>
                     </h2>
-                    <div class="grid grid-cols-1 gap-3">
+                    <div data-controller="reveal" class="grid grid-cols-1 gap-3">
                         {% for item in completed %}
                             {{ include('dashboard/_formation_card.html.twig', { item: item, done: true }) }}
                         {% endfor %}

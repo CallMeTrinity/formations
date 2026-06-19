@@ -53,7 +53,7 @@
             {% if formation.chapters is empty %}
                 <div class="callout">Aucun chapitre pour le moment.</div>
             {% else %}
-                <ol class="grid gap-3">
+                <ol data-controller="reveal" class="grid gap-3">
                     {% for chapter in formation.chapters %}
                         {% set isDone = chapter.id in completedChapterIds %}
                         <li>
