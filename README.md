@@ -20,6 +20,7 @@ Pour rédiger ou modifier une formation, suivre les [consignes](consignes/) (voi
 | Machine learning avec Python | `machine-learning-python` | idée | —                                      |
 | IA pour développeurs : agents, code et API | `ia-pour-developpeurs` | idée | —                                      |
 | Vim : coder sans souris | `vim` | terminée | [f-vim/](f-vim/)                       |
+| Assembleur x86-64 | `assembleur` | terminée | [f-assembleur/](f-assembleur/)         |
 
 Statuts possibles : `idée` · `en cours` · `terminée`.
 
