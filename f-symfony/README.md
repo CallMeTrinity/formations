@@ -17,9 +17,8 @@ Symfony est un framework PHP : il ne s'adresse pas à un débutant complet en pr
 suivre cette formation confortablement, tu dois être à l'aise avec :
 
 - les **bases du langage PHP** (variables, fonctions, tableaux, structures de contrôle) et la
-  **programmation orientée objet** (classes, objets, héritage, interfaces) ;
-- la **ligne de commande** : ouvrir un terminal et lancer des commandes (si ce n'est pas le cas, la
-  formation [Linux & Bash](../linux-bash/README.md) de ce dépôt t'y prépare) ;
+  **programmation orientée objet** (classes, objets, héritage, interfaces).
+- la **ligne de commande** : ouvrir un terminal et lancer des commandes.
 - des notions de **HTML** et du fonctionnement du **web** (une requête, une réponse, une URL).
 
 Tu n'as **pas** besoin de connaître un autre framework, ni d'avoir déjà touché à une base de données :

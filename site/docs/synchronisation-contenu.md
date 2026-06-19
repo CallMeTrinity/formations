@@ -122,8 +122,9 @@ Les liens externes (`http`, `mailto:`), absolus (`/…`) et les ancres pures (`#
 intacts. Le préfixe `NN-` est retiré du slug de chapitre cible (le lecteur n'utilise pas le numéro
 dans l'URL).
 
-> Note d'implémentation : la réécriture se fait par expression régulière sur le HTML rendu. Un `TODO`
-> dans le code prévoit de passer par `UrlGeneratorInterface` plutôt que par des chemins en dur.
+> Note d'implémentation : la réécriture se fait par expression régulière sur le HTML rendu. Les
+> chemins cibles sont générés via `UrlGeneratorInterface` (routes `app_formation_show` et
+> `app_formation_chapter`), pas écrits en dur.
 
 ## DTOs intermédiaires
 

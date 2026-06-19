@@ -4,6 +4,7 @@ namespace App\Service;
 
 use League\CommonMark\Exception\CommonMarkException;
 use League\CommonMark\GithubFlavoredMarkdownConverter;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
  * Rendu markdown → HTML commun au contenu pédagogique (chapitres et README) :
@@ -12,8 +13,10 @@ use League\CommonMark\GithubFlavoredMarkdownConverter;
  */
 final class MarkdownRenderer
 {
-    public function __construct(private GithubFlavoredMarkdownConverter $converter)
-    {
+    public function __construct(
+        private GithubFlavoredMarkdownConverter $converter,
+        private UrlGeneratorInterface $urlGenerator,
+    ) {
     }
 
     /**
@@ -28,9 +31,7 @@ final class MarkdownRenderer
 
     /**
      * Réécrit les liens relatifs inter-chapitres (NN-slug.md, README.md) vers
-     * les chemins du lecteur. Laisse intacts les liens externes, absolus et les ancres.
-     *
-     * TODO #1 : passer par UrlGeneratorInterface quand la route du lecteur existera.
+     * les routes du lecteur. Laisse intacts les liens externes, absolus et les ancres.
      */
     private function rewriteInterChapterLinks(string $html, string $formationSlug): string
     {
@@ -47,8 +48,11 @@ final class MarkdownRenderer
             }
 
             $target = 'README' === $mm[1]
-                ? '/formations/'.$formationSlug
-                : '/formations/'.$formationSlug.'/'.preg_replace('/^\d{2}-/', '', $mm[1]);
+                ? $this->urlGenerator->generate('app_formation_show', ['slug' => $formationSlug])
+                : $this->urlGenerator->generate('app_formation_chapter', [
+                    'slug' => $formationSlug,
+                    'chapterSlug' => preg_replace('/^\d{2}-/', '', $mm[1]),
+                ]);
 
             return 'href="'.$target.(null !== $anchor ? '#'.$anchor : '').'"';
         }, $html) ?? $html;

@@ -20,6 +20,24 @@
         </div>
     </section>
 
+    {% if weeklyProgress %}
+        <section class="border-b border-line">
+            <div class="container-page py-8">
+                <div class="card max-w-xl">
+                    <div class="flex items-baseline justify-between gap-4 mb-1">
+                        <h2 class="text-md font-semibold tracking-tight text-fg">Objectif de la semaine</h2>
+                        <span class="font-mono text-sm text-fg-secondary shrink-0">{{ weeklyProgress.percent }}%</span>
+                    </div>
+                    <p class="text-sm text-muted mb-3">
+                        {{ weeklyProgress.doneMinutes }} / {{ weeklyProgress.goalMinutes }} min cette semaine
+                        {%- if weeklyProgress.doneMinutes >= weeklyProgress.goalMinutes %} · objectif atteint{% endif %}
+                    </p>
+                    <div class="progress"><div class="progress__bar" style="width:{{ weeklyProgress.percent }}%"></div></div>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
     <section>
         <div class="container-page py-10 grid gap-12">
             {% if inProgress is empty and completed is empty %}
