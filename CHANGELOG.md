@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-20
+
+### Added
+- Added animations
+
+### Fixed
+- Fixed link cross formations
+
 ## [1.1.2] - 2026-06-19
 
 ### Added
@@ -38,7 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Markdown Content Parsing: Improved parsing of formation Markdown content to structure information (prerequisites, objectives) and integrated GithubFlavoredMarkdown conversion.
 - Core Functionality: Includes management of content, progression, and user entities, toast notifications, and UI improvements.
 
-[unreleased]: https://github.com/CallMeTrinity/formations/v1.1.2...main
+[unreleased]: https://github.com/CallMeTrinity/formations/v1.2.0...main
+[1.2.0]: https://github.com/CallMeTrinity/formations/tags/v1.2.0
 [1.1.2]: https://github.com/CallMeTrinity/formations/tags/v1.1.2
 [1.1.1]: https://github.com/CallMeTrinity/formations/tags/v1.1.1
 [1.1.0]: https://github.com/CallMeTrinity/formations/tags/v1.1.0
