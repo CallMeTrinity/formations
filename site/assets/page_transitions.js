@@ -20,6 +20,13 @@ document.addEventListener('turbo:before-render', (event) => {
     if (reduceMotion()) {
         return;
     }
+    // Masque le <main> entrant des maintenant : sans ca, il est peint a pleine
+    // opacite pendant la frame entre le swap Turbo et l'animation d'entree de
+    // turbo:load, ce qui donne l'impression que la page se charge deux fois.
+    const incoming = event.detail.newBody?.querySelector('main');
+    if (incoming) {
+        gsap.set(incoming, { autoAlpha: 0, y: 8 });
+    }
     const el = main();
     if (!el) {
         return;

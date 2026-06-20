@@ -30,8 +30,11 @@ final class MarkdownRenderer
     }
 
     /**
-     * Réécrit les liens relatifs inter-chapitres (NN-slug.md, README.md) vers
-     * les routes du lecteur. Laisse intacts les liens externes, absolus et les ancres.
+     * Réécrit les liens relatifs du contenu pédagogique vers les routes du lecteur :
+     * - inter-chapitres d'une même formation : NN-slug.md, README.md
+     * - inter-formations : ../autre-formation/[README.md|NN-slug.md]
+     *
+     * Laisse intacts les liens externes, absolus et les ancres.
      */
     private function rewriteInterChapterLinks(string $html, string $formationSlug): string
     {
@@ -43,18 +46,48 @@ final class MarkdownRenderer
             }
 
             [$path, $anchor] = array_pad(explode('#', $url, 2), 2, null);
-            if (!preg_match('/^(\d{2}-[a-z0-9-]+|README)\.md$/', (string) $path, $mm)) {
-                return $m[0]; // pas un lien inter-chapitre reconnu
+
+            // Lien inter-formation : ../<slug>/ éventuellement suivi d'un chapitre.
+            if (preg_match('#^\.\./([a-z0-9-]+)/?(.*)$#', (string) $path, $cm)) {
+                $target = $this->resolveTarget($cm[1], $cm[2]);
+
+                return null !== $target ? 'href="'.$target.$this->suffix($anchor).'"' : $m[0];
             }
 
-            $target = 'README' === $mm[1]
-                ? $this->urlGenerator->generate('app_formation_show', ['slug' => $formationSlug])
-                : $this->urlGenerator->generate('app_formation_chapter', [
-                    'slug' => $formationSlug,
-                    'chapterSlug' => preg_replace('/^\d{2}-/', '', $mm[1]),
-                ]);
+            // Lien inter-chapitre dans la formation courante : NN-slug.md | README.md.
+            if (!preg_match('/^(\d{2}-[a-z0-9-]+|README)\.md$/', (string) $path, $mm)) {
+                return $m[0]; // pas un lien interne reconnu
+            }
 
-            return 'href="'.$target.(null !== $anchor ? '#'.$anchor : '').'"';
+            $target = $this->resolveTarget($formationSlug, $mm[1].'.md');
+
+            return null !== $target ? 'href="'.$target.$this->suffix($anchor).'"' : $m[0];
         }, $html) ?? $html;
+    }
+
+    /**
+     * Génère l'URL du lecteur pour une formation et un fichier cible
+     * (vide ou README.md → page formation ; NN-slug.md → chapitre).
+     * Retourne null si le fichier n'est pas une cible reconnue.
+     */
+    private function resolveTarget(string $formationSlug, string $file): ?string
+    {
+        if ('' === $file || 'README.md' === $file) {
+            return $this->urlGenerator->generate('app_formation_show', ['slug' => $formationSlug]);
+        }
+
+        if (preg_match('/^\d{2}-([a-z0-9-]+)\.md$/', $file, $fm)) {
+            return $this->urlGenerator->generate('app_formation_chapter', [
+                'slug' => $formationSlug,
+                'chapterSlug' => $fm[1],
+            ]);
+        }
+
+        return null;
+    }
+
+    private function suffix(?string $anchor): string
+    {
+        return null !== $anchor ? '#'.$anchor : '';
     }
 }
